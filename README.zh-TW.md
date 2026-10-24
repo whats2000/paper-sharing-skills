@@ -77,9 +77,9 @@ flowchart LR
 
 ## 📸 範例模板
 
-簡報 skill 附一份參考簡報（[`sample-template.pptx`](skills/paper-discussion-slides/assets/sample-template.pptx)），示範版面規則：封面、附箭頭提問說明框的圖、精準對齊的紅框與說明、以及附 Slido QR 預留位的左右並排討論頁。
+簡報 skill 附一份參考簡報（[`sample-template.pptx`](skills/paper-discussion-slides/assets/sample-template.pptx)），示範版面規則：封面、附箭頭提問說明框的圖、精準對齊的紅框與說明、以及附 Slido QR 預留位的區塊元素。
 
-[![四張範例投影片：封面、附箭頭說明框的圖、對齊的紅框、雙欄討論頁](skills/paper-discussion-slides/assets/sample-template-preview.png)](skills/paper-discussion-slides/assets/sample-template-preview.png)
+[![四張範例投影片：封面、附箭頭說明框的圖、對齊的紅框、區塊元素](skills/paper-discussion-slides/assets/sample-template-preview.png)](skills/paper-discussion-slides/assets/sample-template-preview.png)
 
 也可以使用你自己的模板——Claude 會讀取它的頁首頁尾版面，並用 `chrome()` 繪製。
 

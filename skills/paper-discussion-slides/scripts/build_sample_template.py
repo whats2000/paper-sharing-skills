@@ -12,7 +12,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from slide_kit import (new_deck, blank_slide, chrome, text, rect, callout, arc_arrow, frame,
-                       block_arrow, dim, bullets, qr, notes, MUTED, BLUE, GRAYBG)
+                       block_arrow, dim, bullets, block, qr, notes, MUTED, BLUE, GRAYBG)
 
 DECK = 'Short Deck Title'
 CREDIT = 'Source Authors / Institution, 2026'   # the work being discussed, not the presenter
@@ -63,16 +63,12 @@ def content(prs, step):
 
 def blocks(prs):
     s = blank_slide(prs)
-    chrome(s, 'Two blocks side by side (discussion)', DECK, CREDIT, page=3, total=TOTAL)
-    for i, (head, body) in enumerate([('Why it works', ['point with a number', 'second point']),
-                                      ('Limits the authors admit', ['quote their wording', '"in some cases"'])]):
-        x = 72 + i * 900
-        rect(s, x, 260, 840, 70, fill=BLUE, radius=12)
-        text(s, x + 28, 260, 800, 70, head, size=32, color='FFFFFF', bold=True, anchor='m')
-        rect(s, x, 330, 840, 380, fill=GRAYBG, radius=12)
-        bullets(s, x + 28, 360, 790, 330, body, size=30)
+    chrome(s, 'Block element (layout is chosen per slide)', DECK, CREDIT, page=3, total=TOTAL)
+    for i, (head, body) in enumerate([('Block A', ['keyword or number', 'second keyword']),
+                                      ('Block B', ['keyword or number', 'second keyword'])]):
+        block(s, 72 + i * 900, 260, 840, 450, head, body, size=30)
     qr(s, '', 1620, 740, 200, label='Slido QR (placeholder)')
-    notes(s, 'Blocks: accent title bar, light grey body with real bullets (bullets()), keywords and numbers only. '
+    notes(s, 'block() in the template colours; headings and columns are placeholders. '
              'The QR placeholder shows what qr() draws when no event link is known yet.')
     return s
 

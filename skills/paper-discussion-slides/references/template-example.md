@@ -15,7 +15,8 @@ This is the built-in default template: with no user template, use `new_deck()` a
   - **each footer text box has exactly the band's top and height, zero insets, no autofit, and middle anchoring.** A text box that is taller than the band, starts above it, or is top-anchored with default insets renders the text too high (this happened in a real deck: the boxes were 44 px tall starting at 1036 px, 4 px above the band, top-anchored).
 - **Cover:** no header or footer; title, original title, authors / source / date, a cover strip of source figures, logos bottom left, "Presented by …" bottom right.
 - **Colours:**
-  - accent `#005AA0`, second accent `#C83C3C`, secondary text `#5F5F6E`, block background `#F0F0F0`
+  - accent `#3333B2`, second accent `#C83C3C`, secondary text `#5F5F6E`
+  - blocks: title bar `#4747BA`, body `#EBEBF7` (a tint of the main colour)
   - callout text about `#FF5757` on a light grey box with a thin blue border (`#99BDD9`)
   - block arrows light grey-blue (about `#C8D0DA`)
 - **Fonts:** Latin Arial; CJK Microsoft JhengHei / Noto Sans CJK TC.

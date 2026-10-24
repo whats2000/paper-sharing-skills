@@ -27,6 +27,7 @@
 | `picture(slide, path, x, y, w, h)` | Fit an image into a box keeping its aspect ratio; returns the box it actually covers (for `sub`) |
 | `hbars(slide, x, y, rows, vmin=0, vmax=100, ...)` | Native horizontal bar chart; `vmin < 0` draws a zero line and negative bars; returns each bar's position (for arrows) |
 | `bullets(slide, x, y, w, h, items, size)` | List with real paragraph bullets and a hanging indent |
+| `block(slide, x, y, w, h, title, items, size)` | Titled block in the template's colours (`TEMPLATE['block']`) |
 | `video(slide, path, x, y, w, h, poster, autoplay=True, loop=True, mute=True)` | Embedded video fitted to the poster's aspect ratio; all videos on a slide autoplay and loop together |
 | `qr(slide, data, x, y, size, label)` | QR code via `segno` (`pip install segno`); empty `data` or missing `segno` draws a labelled placeholder |
 | `notes(slide, script)` | Write the speaker script |

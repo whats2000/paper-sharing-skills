@@ -19,7 +19,7 @@ from PIL import Image
 # colours (override to match your template)
 INK = '1A1A1A'
 MUTED = '5F5F6E'
-BLUE = '005AA0'
+BLUE = '3333B2'
 RED = 'C83C3C'
 GRAYBG = 'F0F0F0'
 CALLRED = 'FF5757'
@@ -276,6 +276,7 @@ TEMPLATE = {
     'footer': dict(top=1040, bottom=1080, split=960,
                    left_fill='4747BA', right_fill='8585D1',
                    left_color='FFFFFF', right_color='1F1F5C', size=18, pad=36),
+    'block': dict(title_fill='4747BA', title_color='FFFFFF', body_fill='EBEBF7', title_h=70, size=32),
 }
 
 
@@ -353,6 +354,18 @@ def chrome(slide, title=None, deck_title='', credit='', page=None, total=None, h
 # ---------------------------------------------------------------------------
 # Lists, videos and QR codes
 # ---------------------------------------------------------------------------
+def block(slide, x, y, w, h, title, items=None, size=30, radius=12):
+    """titled block in the template's colours (TEMPLATE['block']), with optional bullet items."""
+    B = TEMPLATE['block']
+    th = B['title_h']
+    els = rect(slide, x, y, w, th, fill=B['title_fill'], radius=radius)
+    els += text(slide, x + 28, y, w - 56, th, title, size=B['size'], color=B['title_color'], bold=True, anchor='m')
+    els += rect(slide, x, y + th, w, h - th, fill=B['body_fill'], radius=radius)
+    if items:
+        els += bullets(slide, x + 28, y + th + 30, w - 56, h - th - 50, items, size=size)
+    return els
+
+
 def bullets(slide, x, y, w, h, items, size=28, color=INK, char='•', indent=None, space_after=10):
     """bullet list with real paragraph bullets and a hanging indent.
 
