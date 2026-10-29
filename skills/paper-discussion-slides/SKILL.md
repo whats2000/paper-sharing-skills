@@ -38,6 +38,7 @@ Material comes first: the slides are built from the paper's own assets, collecte
   - No: the point is a relationship that is understood at a glance → keep it together on one slide.
 - Decide only by whether the point needs step-by-step explanation, not by page count. Splitting naturally adds pages; as long as every step has something to say (≥ 20 seconds), the time shows up in the script.
 - **Do not split parallel lists, simple introductions, or relationships that are obvious at a glance.**
+  - Exception: a list whose items each need their own explanation (≥ 20 seconds of script each) and point back to different earlier parts of the talk (e.g., "how reliable is each of the three results we saw?") may be revealed one item per step, dimming the items already discussed with `dim_area()`. The audience then looks at one item while the earlier ones stay visible for context.
 
 Read `references/examples.md` before building: it has the full positive and negative examples (an opening build, a composition relationship, an over-split parallel list).
 
@@ -45,14 +46,15 @@ Read `references/examples.md` before building: it has the full positive and nega
 1. Build the complete slide first.
 2. Duplicate it several times and, in each copy, delete what has not been explained yet. The first step is mostly empty; show only what has been said; the last step equals the complete slide.
    - **When the slide is one image whose parts are explained in turn** (a pipeline figure, a diagram), there is nothing separate to delete. Prefer cropping the image into its parts and placing them as separate pictures; if the parts cannot be separated cleanly, cover the parts not yet explained with `hide()` (an opaque white cover) and remove the cover on the step that explains that part.
-   - `hide()` and `dim()` are opposites: `hide` covers what is **still to come**; `dim` fades what was **already discussed** so the current element stands out. Do not use one for the other.
+   - `hide()` and `dim_area()` / `dim()` are opposites: `hide` covers what is **still to come**; dimming fades what was **already discussed** so the current element stands out. Do not use one for the other.
+   - **Dim with a mask by default:** to fade already-discussed content, lay `dim_area()` over it: one white rectangle at 80% opacity (PowerPoint "transparency 20%"), no outline, no shadow, covering the whole group (picture, text and arrows of one row together). Earlier content stays readable for context while the eye goes to the current part. A mask is one shape the speaker can adjust in PowerPoint, and because every build step is its own slide (not an in-slide animation), the build survives export to PDF and handouts unchanged. Use `dim()` only to fade a single element in place.
 3. All build steps of one concept share one page number, because logically they are one slide.
 4. Every build step needs at least 20 seconds of script. If a step only gets one sentence, it is split too finely; merge it.
 
 ### Red frames and callouts
 - A red frame marks only the part that is new or being discussed on this step; the callout states what that part means; the script explains it in detail.
 - A frame lives only on the step that discusses it. When the focus moves on, remove the old frame so it does not distract.
-- **Red frame vs. dimming:** use a red frame only to circle *a part of one image*. When the subject is a whole image or a whole element (e.g., the third of three pictures), do not frame it; dim the other (already discussed) elements instead.
+- **Red frame vs. dimming:** use a red frame only to circle *a part of one image*. When the subject is a whole image or a whole element (e.g., the third of three pictures), do not frame it; dim the other (already discussed) elements instead (`dim_area()` over them).
 
 ### Arrows: connect what is being discussed to its callout
 - Do not leave a callout floating in a corner. Draw an arrow from the element (or red frame) being discussed to its callout, so the audience sees at once what the sentence explains.
@@ -170,7 +172,7 @@ The goal is for the room to think together, not one person talking while everyon
 
 ## 10. Building PPTX files
 
-When building with python-pptx, read `references/pptx-techniques.md` first and use the helpers in this skill's `scripts/slide_kit.py` (template header / title / footer, callouts that fit their text and can be centred, curved and block arrows, red frames, dimming and hiding, native bar charts with negative values, real bullet lists, titled blocks in the template's colours, autoplaying and looping videos, QR codes, coordinate conversion). Use `bullets()` for lists instead of typing '•' (a typed bullet has different widths in CJK and Latin text, so wrapped lines misalign). Check the result with `scripts/render_check.py`: it renders every page, a thumbnail sheet for layout, and `footers.png`, a full-resolution strip of every footer.
+When building with python-pptx, read `references/pptx-techniques.md` first and use the helpers in this skill's `scripts/slide_kit.py` (template header / title / footer, callouts that fit their text and can be centred, curved and block arrows, red frames, dimming masks and hiding, native bar charts with negative values, real bullet lists, titled blocks in the template's colours, autoplaying and looping videos, QR codes, coordinate conversion). Use `bullets()` for lists instead of typing '•' (a typed bullet has different widths in CJK and Latin text, so wrapped lines misalign). Check the result with `scripts/render_check.py`: it renders every page, a thumbnail sheet for layout, and `footers.png`, a full-resolution strip of every footer.
 
 ## 11. Final checklist
 
@@ -179,7 +181,7 @@ When building with python-pptx, read `references/pptx-techniques.md` first and u
 - [ ] Builds are used only for points that need step-by-step guidance; parallel lists and at-a-glance relationships are not split; points that need a build were not crammed into one slide to save pages
 - [ ] Each slide's presentation was chosen for the point it makes
 - [ ] Every term has its full name + plain explanation on first use; no glossary slide
-- [ ] Red frames appear only on their own step and were zoom-checked for alignment; whole elements are dimmed, not framed
+- [ ] Red frames appear only on their own step and were zoom-checked for alignment; whole elements are dimmed, not framed; dimming masks have no outline or shadow
 - [ ] Every callout is connected by an arrow to what it explains; boxes fit the text; text is about 36 pt
 - [ ] About 1 minute of script per slide; at least 20 seconds per build step
 - [ ] Template chosen in the order of section 8; footer credit names the source, presenter is on the cover

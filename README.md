@@ -128,7 +128,7 @@ posters <video> --at 0.1 0.5 0.9            extract still frames (needs ffmpeg)
 check   <dir>                               verify every manifest file exists and opens
 ```
 
-**`slide_kit.py`** — python-pptx helpers: `chrome()` (template header / title / footer), `callout()`, `frame()`, `arc_arrow()`, `block_arrow()`, `bullets()`, `hbars()`, `video()`, `qr()`, `notes()`, `dim()` / `hide()` for progressive builds.
+**`slide_kit.py`** — python-pptx helpers: `chrome()` (template header / title / footer), `callout()`, `frame()`, `arc_arrow()`, `block_arrow()`, `bullets()`, `hbars()`, `video()`, `qr()`, `notes()`, `dim_area()` (dimming mask, default) / `dim()` / `hide()` for progressive builds.
 
 **`render_check.py`** — page renders, a thumbnail sheet and a footer zoom strip, so frames and alignment are checked visually rather than assumed.
 

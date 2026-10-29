@@ -9,7 +9,7 @@
       "name": "paper-sharing-skills",
       "source": "./",
       "description": "Skills for sharing research papers: project setup and asset collection, and paper discussion slide design.",
-      "version": "0.3.0"
+      "version": "0.3.1"
     }
   ]
 }

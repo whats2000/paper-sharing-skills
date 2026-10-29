@@ -212,6 +212,20 @@ def dim(elements, amt=30000):
     return elements
 
 
+def dim_area(slide, x, y, w, h, fill='FFFFFF', opacity=80000):
+    """fade a region that was ALREADY discussed: a white mask over it (default for dimming).
+
+    One rectangle, `opacity` 80000 (= PowerPoint transparency 20%), no outline, no shadow, so the
+    earlier content stays readable for context while the eye goes to the current part. Cover a
+    whole group (picture + text + arrow of one row) with one mask. Because each build step is its
+    own slide, the effect survives PDF export. Opposite of `hide`, which covers what is still to come;
+    use `dim` only to fade a single element in place. Draw it after the content it covers."""
+    els = rect(slide, x, y, w, h, fill=fill, radius=0)
+    for c in els[0].iter(qn('a:srgbClr')):
+        c.append(c.makeelement(qn('a:alpha'), {'val': str(opacity)}))
+    return els
+
+
 def hide(slide, x, y, w, h, fill='FFFFFF', opacity=92000):
     """cover a part of an image that has NOT been explained yet (build by subtraction on a single image).
 

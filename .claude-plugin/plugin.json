@@ -1,6 +1,6 @@
 {
   "name": "paper-sharing-skills",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A set of Claude skills for sharing research papers, from collecting a paper's material to presenting it. Includes project setup with asset collection and audience-first paper discussion slide design.",
   "author": {
     "name": "whats2000"
