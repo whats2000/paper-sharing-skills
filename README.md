@@ -7,10 +7,10 @@
 Project folder + asset collection with source attribution · audience-first paper-discussion decks (PPTX or Canva) · progressive builds only where reasoning needs them · precise highlight frames · arrows from every callout · time budgeted by key points, not page count.
 
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757?logo=claude&logoColor=white)
-![Skills](https://img.shields.io/badge/skills-2-8A63D2)
+![Skills](https://img.shields.io/badge/skills-3-8A63D2)
 ![Python](https://img.shields.io/badge/python-3-3776AB?logo=python&logoColor=white)
 ![python-pptx](https://img.shields.io/badge/python--pptx-helpers-B7472A?logo=microsoftpowerpoint&logoColor=white)
-![Version](https://img.shields.io/badge/release-v0.3.0-success)
+![Version](https://img.shields.io/badge/release-v0.4.0-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 **English** · [繁體中文](README.zh-TW.md)
@@ -54,6 +54,7 @@ Works in **Claude Code**, **claude.ai** and the **Claude desktop app**.
 | --- | --- | :---: |
 | [`paper-project-setup`](skills/paper-project-setup/SKILL.md) | Sets up a project folder for one paper or topic and collects its media (PDF, figures, demo videos, chart data, screenshots) with source attribution: downloads automatically where possible (direct, released files, browser), asks only for what truly cannot be fetched, and keeps a typed manifest of every asset plus a missing list. | v0.2.1 |
 | [`paper-discussion-slides`](skills/paper-discussion-slides/SKILL.md) | Designs paper-discussion / journal-club decks (PPTX or Canva) that put audience understanding first. Ships a reference template deck, a `chrome()` helper for template header / footer, and a render checker for page renders, thumbnail sheets and footer zoom strips. | v0.2.0 |
+| [`talk-event-promo`](skills/talk-event-promo/SKILL.md) | Makes the promotion for an upcoming talk: a 1600×640 event cover (input→output / before→after comparison, or a process showcase with the tool's own UI) rendered by `make_cover.py` and checked at thumbnail size, plus a plain-language title and a two-to-three-sentence description in the group's format. | v0.1.0 |
 
 More paper-sharing skills will be added over time.
 
@@ -71,7 +72,7 @@ flowchart LR
     D5 --> E["🎤 Deck + speaker notes"]
 ```
 
-If the paper has no project folder yet, Claude runs `paper-project-setup` first, then follows the slide workflow.
+If the paper has no project folder yet, Claude runs `paper-project-setup` first, then follows the slide workflow. Before the talk, `talk-event-promo` turns the same material into an event cover and a short announcement.
 
 ---
 
@@ -111,6 +112,7 @@ Just describe what you need:
 - *"Build journal club slides for this paper using my template (attached)."*
 - *"Set up a folder for this paper and collect the figures and demo videos from its project page."*
 - *"幫我做這篇論文的讀書會簡報，用繁體中文，20 分鐘。"*
+- *"Next week we discuss this repo — suggest a cover image and write a short event intro."*
 
 <details>
 <summary><b>Helper scripts Claude uses under the hood →</b></summary>
@@ -156,6 +158,11 @@ check   <dir>                               verify every manifest file exists an
             ├── slide_kit.py              # python-pptx helpers, incl. chrome()
             ├── build_sample_template.py  # rebuilds assets/sample-template.pptx
             └── render_check.py           # page renders, thumbnail sheet, footer zoom strip
+    └── talk-event-promo/
+        ├── SKILL.md                 # cover layout choice, description length, checks
+        ├── references/examples.md   # two finished promotions (compare, showcase)
+        ├── assets/                  # example covers
+        └── scripts/make_cover.py    # renders compare / showcase covers + thumbnail preview
 ```
 
 ---
@@ -188,7 +195,7 @@ If these skills help your talks or research, please cite them:
   title   = {{paper-sharing-skills: Audience-First Claude Skills for Sharing Research Papers}},
   year    = {2026},
   url     = {https://github.com/whats2000/paper-sharing-skills},
-  version = {0.3.0}
+  version = {0.4.0}
 }
 ```
 

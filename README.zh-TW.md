@@ -7,10 +7,10 @@
 專案資料夾與素材收集（附來源）· 以觀眾理解為核心的論文討論簡報（PPTX 或 Canva）· 只在需要分步推理時才拆頁 · 紅框精準對齊 · 每個說明框都有箭頭 · 用要點估時間，不用頁數。
 
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757?logo=claude&logoColor=white)
-![Skills](https://img.shields.io/badge/skills-2-8A63D2)
+![Skills](https://img.shields.io/badge/skills-3-8A63D2)
 ![Python](https://img.shields.io/badge/python-3-3776AB?logo=python&logoColor=white)
 ![python-pptx](https://img.shields.io/badge/python--pptx-helpers-B7472A?logo=microsoftpowerpoint&logoColor=white)
-![Version](https://img.shields.io/badge/release-v0.3.0-success)
+![Version](https://img.shields.io/badge/release-v0.4.0-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 [English](README.md) · **繁體中文**
@@ -54,6 +54,7 @@
 | --- | --- | :---: |
 | [`paper-project-setup`](skills/paper-project-setup/SKILL.md) | 為一篇論文或一個主題建立專案資料夾，收集 PDF、圖片、展示影片、圖表數據、截圖並記錄來源：能自動下載就自動（直接下載、釋出檔案、瀏覽器），真的抓不到才請使用者幫忙，並維護每個素材的 manifest 與缺漏清單。 | v0.2.1 |
 | [`paper-discussion-slides`](skills/paper-discussion-slides/SKILL.md) | 製作以觀眾理解為核心的論文討論／讀書會簡報（PPTX 或 Canva）。附參考模板簡報、繪製模板頁首頁尾的 `chrome()`，以及產生頁面渲染、縮圖總覽與頁尾放大條的檢查工具。 | v0.2.0 |
+| [`talk-event-promo`](skills/talk-event-promo/SKILL.md) | 為即將舉辦的分享做宣傳：1600×640 活動封面（輸入→輸出／前後對照，或用工具本身介面的流程展示），由 `make_cover.py` 繪製並檢查縮圖是否看得清楚，再寫白話標題與兩三句、符合社群格式的活動簡介。 | v0.1.0 |
 
 之後會陸續加入更多論文分享相關的 skill。
 
@@ -71,7 +72,7 @@ flowchart LR
     D5 --> E["🎤 簡報 + 講稿"]
 ```
 
-製作簡報前若論文還沒有專案資料夾，Claude 會先執行 `paper-project-setup`，再進入簡報流程。
+製作簡報前若論文還沒有專案資料夾，Claude 會先執行 `paper-project-setup`，再進入簡報流程。活動前，`talk-event-promo` 會用同一份素材做出活動封面與簡短介紹。
 
 ---
 
@@ -110,6 +111,7 @@ flowchart LR
 - *「幫我做這篇論文的讀書會簡報，用繁體中文，20 分鐘。」*
 - *「用我的模板（附件）做這篇論文的 journal club 簡報。」*
 - *「幫這篇論文建立資料夾，並從專案頁面收集圖片和展示影片。」*
+- *「下週要討論這個 repo，幫我挑封面圖、寫活動簡介。」*
 - *"Make a 30-minute discussion deck for this paper; the audience is students interested in robotics."*
 
 ---
@@ -138,7 +140,7 @@ flowchart LR
   title   = {{paper-sharing-skills: Audience-First Claude Skills for Sharing Research Papers}},
   year    = {2026},
   url     = {https://github.com/whats2000/paper-sharing-skills},
-  version = {0.3.0}
+  version = {0.4.0}
 }
 ```
 
