@@ -163,7 +163,8 @@ def picture(slide, path, x, y, w, h, alt=''):
 
 
 def arc_arrow(slide, p0, p1, bend=0.35, color=CALLRED, width=10, n=32):
-    """curved red arrow from p0 to p1 (px). bend > 0 bows to the left of the travel direction; ~0 is straight."""
+    """curved red arrow from p0 to p1 (px), arrowhead at p1. bend > 0 bows to the left of the travel direction; ~0 is straight.
+    For a callout, p0 is on the element being discussed and p1 on the callout: red means the point is pulled out for discussion."""
     (x0, y0), (x1, y1) = p0, p1
     mx, my = (x0 + x1) / 2, (y0 + y1) / 2
     dx, dy = x1 - x0, y1 - y0
@@ -187,7 +188,8 @@ def arc_arrow(slide, p0, p1, bend=0.35, color=CALLRED, width=10, n=32):
 
 
 def block_arrow(slide, x, y, w, h, direction='down', fill=ARROWGRAY):
-    """solid block arrow for a direct 'this → so' link."""
+    """solid block arrow for a direct 'this, therefore' link. For a callout it points from the element to the callout
+    (direction names where the head points); also used for flow between parts of the content."""
     shp = {'down': MSO_SHAPE.DOWN_ARROW, 'right': MSO_SHAPE.RIGHT_ARROW,
            'left': MSO_SHAPE.LEFT_ARROW, 'up': MSO_SHAPE.UP_ARROW}[direction]
     sp = slide.shapes.add_shape(shp, _px(slide, x), _px(slide, y), _px(slide, w), _px(slide, h))

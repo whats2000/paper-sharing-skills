@@ -13,7 +13,7 @@ Write the slides and speaker notes in the language the user asks for (default: t
 
 Every rule below exists for this goal. When a situation is not covered, ask: "Does doing this make it easier for the audience to understand?" If not, do not do it, even if some rule seems to allow it. The rules are judgment tools, not a template to apply by default.
 
-**Goals are the rules; specifics are examples.** Most rules below state a goal and then show one way that works (a style, a size, a number, a layout). Treat those specifics as illustrations of the goal, not as formats to reproduce exactly; choose what fits each slide. Only these are fixed: the template's measured header, footer, fonts and colours; minimum font sizes; and the checks (numbers against the source, zoomed frame checks, page numbers on build steps).
+**Goals are the rules; specifics are examples.** Most rules below state a goal and then show one way that works (a style, a size, a number, a layout). Treat those specifics as illustrations of the goal, not as formats to reproduce exactly; choose what fits each slide. Only these are fixed: the template's measured header, footer, fonts and colours; minimum font sizes; callout arrow direction and colour meaning (section 2); and the checks (numbers against the source, zoomed frame checks, page numbers on build steps).
 
 ## Story first: convey the core idea and make people think
 
@@ -44,7 +44,7 @@ Material comes first: the slides are built from the paper's own assets, collecte
 6. **Decide slide by slide whether a concept needs a progressive build** (section 2). Split only when the concept needs detailed, step-by-step guidance, and split by subtraction.
 7. **Re-estimate time from the script** (script length ÷ speaking rate, plus interaction time). If over, merge steps or cut key points. More pages because of builds is normal; never merge just to reduce page count.
 8. **Review the slide text from the audience's seat** (section 3a): read every slide as someone who has not heard the script, cut sentences down to keywords, then run `scripts/audit_text.py` and fix what it reports.
-9. **Check** (section 11): numbers against the source, frames zoomed in, terms clear where first introduced, callout size and arrows, font sizes, script length, page numbers.
+9. **Check** (section 11): numbers against the source, frames zoomed in, terms clear where first introduced, callout size, arrow direction (element to callout) and colour, font sizes, script length, page numbers.
 
 ---
 
@@ -76,7 +76,11 @@ Read `references/examples.md` before building: it has the full positive and nega
 
 ### Arrows: connect what is being discussed to its callout
 - **Goal: the eye goes from the element to its explanation.** Do not leave a callout floating in a corner. Draw an arrow from the element (or red frame) being discussed to its callout, so the audience sees at once what the sentence explains.
-- Choose the arrow's style per slide for what the link means. For example: a **curved red arrow** (thick, round cap) suggests "this leads to a question or idea", such as curving from a prompt box to a "can this work?" callout, because the curve guides the eye and invites the next thought; a **solid light grey-blue block arrow** suggests a direct "this, therefore", such as pointing straight down from two framed lines to the callout "this is the example".
+- **Direction is fixed: a callout arrow starts at the element (or red frame) and ends at the callout**, with the arrowhead on the callout. The arrow sets the reading order: the audience looks at the figure first, then follows the arrow to the callout that says what it means. An arrow pointing from the callout back into the figure makes them read the callout first and look for the evidence afterwards, which reverses the explanation.
+- **Colour carries meaning; keep it the same across the deck.** Choose by what the callout does, not by what looks better:
+  - **Curved red arrow** (thick, round cap): the point is pulled out for discussion, such as a question, a doubt or something to think about. Example: curving from a prompt box out to a "can this work?" callout; the curve guides the eye and invites the next thought.
+  - **Solid light grey-blue block arrow**: a direct "this, therefore". Example: pointing straight down from two framed lines to the callout "this is the example".
+- Arrows that show a flow inside the content (input to model, one video to the next, before to after) follow the flow. They are not callout arrows; draw them grey-blue.
 - Arrows, like frames, exist only on the step that discusses them and leave with them.
 - Start the arrow close to the element and end it close to the callout; do not cross other content; usually one arrow per slide.
 - **When the target sits inside an image** (a label in the middle of a figure), the arrow cannot avoid the image. Then, in this order: (1) place the callout on an empty or already-hidden area of the image right next to the frame, so the arrow is short or unnecessary; (2) otherwise put the callout beside the image on the side nearest the frame and let the arrow run straight over the image along the shortest path, crossing only parts that are not being discussed; (3) never route an arrow over another framed or labelled element. A short arrow over the image is better than a long detour around it.
@@ -203,7 +207,10 @@ A poll costs about three minutes, so it earns its place only if the room learns 
 ## 8. Layout and template
 
 - **The template constrains only the header, footer, fonts and text colours.** Lay out everything else to fit the content.
-- **Fill the space the content is given.** Large empty areas on a slide, or a box much bigger than its text, signal that the layout needs work. Fix it the way a designer would: shrink the box to fit, or enlarge the text and chart to use the space (staying within one idea), and for a conceptual point (a limitation, a trade-off, a comparison of two ideas) add a simple drawn illustration or the paper's own image as a visual anchor (for example dots for "2 of 10" or a stopwatch with "?" for "not measured"; choose whatever fits the point). Simple icons like these are fine; never invent stand-ins for the paper's own figures or results. Where the slide still feels thin, add the one key point it is missing, not filler. A text-only bullet list that leaves half the slide blank should usually become cards, each with its own small visual.
+- **Use the space the content needs, no more and no less.** A box much bigger than its text, or a slide that looks half finished, signals that the layout needs work: shrink the box to fit, or enlarge the text and chart to use the space (staying within one idea). Empty space is a signal to look again, not a quota to fill; a short, clean list with room around it is often the easiest slide to read.
+- **A good visual lets the audience understand the point by looking at it.** That means an illustration that shows the idea itself, not a symbol placed next to it. For example, for "tested on only one robot", one robot drawn in colour beside several greyed-out robot outlines; for "only 2 of 10 runs finished", ten small task icons with two complete and eight stopped part-way. Someone who sees only the picture should already grasp the point; the words confirm it. A thumbnail of an earlier figure or result the point refers to also works, because the audience recognises it at once.
+- **Simple symbols are not visuals.** A `?`, `≈`, a generic icon or a big standalone number does not show the idea; the audience has to decode it, which makes the slide harder. Do not add them to decorate or to fill space. If no illustration genuinely shows the point, a clean text slide is better than a decorated one. Never invent stand-ins for the paper's own figures or results.
+- **One reading path.** The audience should know where to start and in which order to read: the largest text is the point itself, not a decoration, and items run in one direction in the order the speaker talks about them. A grid of cards where each card has several entry points (a big symbol, a heading, a detail line) makes people jump around and tires them out.
 - **Text beside a picture, video or chart is vertically centred on it.** When text and media share a row, give the text box the media's top and height (use the box `picture()` / `video()` return, not the requested box, since media are fitted) and anchor it to the middle (`anchor='m'`); a side block (`block()`) is centred the same way. Text stuck to the top edge of a row while the image is taller looks unfinished.
 - Do not copy a layout from an example slide without asking why it looks that way. For instance, an example slide may use a grey monospace code box because it shows a language-model prompt; when the content is not a prompt, that style does not apply.
 - **Which template to use, decided in this order:**
@@ -240,7 +247,7 @@ When building with python-pptx, read `references/pptx-techniques.md` first and u
 - [ ] Each slide's presentation was chosen for the point it makes
 - [ ] Every term's meaning is clear on the slide that first introduces it; no glossary slide
 - [ ] Red frames appear only on their own step and were zoom-checked for alignment; whole elements are dimmed, not framed; dimming masks have no outline or shadow
-- [ ] Every callout is connected by an arrow to what it explains; boxes fit the text; text readable from the back row (≥ 28 pt)
+- [ ] Every callout is connected by an arrow that starts at what it explains and ends at the callout (red = pulled out for discussion, grey-blue = therefore); boxes fit the text; text readable from the back row (≥ 28 pt)
 - [ ] Notes are short and spoken (no parentheses, glosses or stage directions); every long note led to a split, a cut or a move to backup
 - [ ] Template chosen in the order of section 8; footer credit names the source, presenter is on the cover
 - [ ] Header and footer drawn with `chrome()`; `footers.png` from `render_check.py` shows footer text vertically centred inside its band on every page
@@ -250,6 +257,6 @@ When building with python-pptx, read `references/pptx-techniques.md` first and u
 - [ ] Every on-slide line is a keyword or number, not a sentence; every slide re-read from the audience's seat; `audit_text.py` reports no `SMALL`, `LONG` or `ARROW` lines except author lists and source credits
 - [ ] Body text ≥ 24 pt, captions ≥ 22 pt, callouts ≥ 28 pt
 - [ ] Text and blocks beside media are vertically centred on the media, not stuck to the top
-- [ ] No slide has a large blank area or a box much larger than its text; conceptual slides have a visual anchor
+- [ ] No box much larger than its text; every visual shows the idea itself (illustrations the point can be understood from, not decorative icons or symbols to decode); each slide has one clear reading path with the point as the largest text
 - [ ] No typed arrows in normal slide text (equations excepted); every line reads naturally in about three seconds
 - [ ] Every poll has an answer in the source, is not given away by the title or description, is likely to be guessed wrong, and its reveal opens the next key point
