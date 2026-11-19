@@ -22,3 +22,28 @@ The concept needs no detailed explanation; the point is the relationship itself.
 ## Negative: a parallel list split too far
 
 A slide "validated on 8 real platforms and 5 robot bodies" was split into 8 slides, each showing one robot or one condition with a single sentence of script (5–15 seconds). The audience did not need to see the platforms in sequence, and the constant page-turning lost them. Fix: one slide of about 1–1.5 minutes with all five robot photos in a row and the test conditions below.
+
+## Negative → positive: a poll whose answer the talk already gives
+
+A talk titled "RoboTTT: Context Scaling for Robot Policies" opened with a pre-test / post-test opinion poll: "Can one-shot learning extend to long-horizon, high-precision work?" (already ... soon ... many years ... never), and later asked "As pre-training context grows from 128 to 8K steps, real-robot performance will: keep rising / saturate / rise then fall / not change". The first repeated the event description; the second was answered by the talk's title. Neither reveal taught anything.
+
+Replaced with:
+
+1. Right after the slide showing that the robot cannot tell which stage it is at from one frame: "Add one past frame to the model's input. On the Pup Go Car task, the completion score becomes: clearly better / about the same / worse". Most people pick "better"; the answer is worse (39.5% vs 57% without history). The reveal is the first step of the next slide ("three ways to remember the past"), and it motivates why memory must be learned rather than appended.
+2. Before the scaling curve: "The best short-context baseline scores 45.6. How long must RoboTTT's pre-training context be before it beats it? about 4 s (128 steps) / about 17 s (512) / about 1 min (2K) / 4.5 min (8K)". The answer (about 1 minute; at 1K it still loses, 43.9) shows that long memory only pays off once it is long enough, which is the real content of the scaling claim.
+
+Both have a sourced answer, a likely wrong guess, nothing given away beforehand, and a reveal that opens the next point.
+
+## Negative → positive: sentences on slides
+
+The slide text should be the keyword skeleton of the script. Before and after from a real deck (Traditional Chinese originals):
+
+| Before (sentence on the slide) | After (keywords; the sentence moves to the notes) |
+|---|---|
+| "In-Context Learning (ICL): without changing the weights, it learns a new task only from examples placed in its context, just like giving a language model one worked example." | "In-Context Learning (ICL): weights fixed, learns from examples" |
+| "But the update rule is a hand-designed linear rule, and the authors argue it cannot extract the structure of long, repetitive streams." | "but hand-designed linear update, no gradient descent" |
+| "DAgger: when the robot errs a human takes over and demonstrates the fix, then the fixes are used for training." | "DAgger: human fixes errors → train on fixes" |
+| "'Latency does not grow' comes from the architecture; the main text reports no measured latency." | "Latency: no measured numbers" |
+| A poll slide with two lines of set-up before the question | "Add 1 past frame → Pup Go Car score?" (set-up spoken) |
+
+Running `scripts/audit_text.py` on the first draft flagged 38 sentence-like lines; after the rewrite only the author list and source credits remained.

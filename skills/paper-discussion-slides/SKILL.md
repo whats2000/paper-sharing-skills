@@ -26,7 +26,8 @@ Material comes first: the slides are built from the paper's own assets, collecte
 5. **Write the full speaker script for every slide** (about 1 minute; section 5).
 6. **Decide slide by slide whether a concept needs a progressive build** (section 2). Split only when the concept needs detailed, step-by-step guidance, and split by subtraction.
 7. **Re-estimate time from the script** (script length ÷ speaking rate, plus interaction time). If over, merge steps or cut key points. More pages because of builds is normal; never merge just to reduce page count.
-8. **Check** (section 11): numbers against the source, frames zoomed in, full names on first use, callout size and arrows, script length, page numbers.
+8. **Review the slide text from the audience's seat** (section 3a): read every slide as someone who has not heard the script, cut sentences down to keywords, then run `scripts/audit_text.py` and fix what it reports.
+9. **Check** (section 11): numbers against the source, frames zoomed in, full names on first use, callout size and arrows, font sizes, script length, page numbers.
 
 ---
 
@@ -94,6 +95,20 @@ Video, images and charts are not defaults; choose by condition:
 - Having a video in the source does not mean it belongs on the slide; a video used for a single static point makes the audience look in the wrong place.
 - **Visual first:** almost no text-only slides. Put only keywords and numbers on the slide and the full explanation in the speaker notes. With too much text, the audience reads instead of listening and thinking.
 
+### 3a. On-slide text: keywords that anchor the script
+
+The words on a slide are anchors: they let the audience follow the speaker and later recap the talk from the slides alone, and they let the speaker find their place in the script. Sentences belong in the notes.
+
+- **One idea per line, as keywords or numbers.** About 12–15 CJK characters or 6–8 English words per line at most. Use compact patterns: `A → B`, `A vs B`, `label: keyword`, a number with its unit.
+- **No sentence punctuation** on the slide: no full stops, semicolons, dashes, or chains of commas. If a line needs them, it is a sentence; move it to the notes.
+- **Definitions on first use stay short:** "Full Name (ABBR): a gist of ten-odd characters" (e.g. "In-Context Learning (ICL): weights fixed, learns from examples"). The plain-language explanation is spoken, and written in the notes.
+- **Poll questions fit one line** on the slide; the set-up sentence is spoken.
+- **Callouts: 1–2 lines**; block items: 2–4 short lines.
+- **Font sizes** (1920 × 1080 canvas, 20-inch slide): body text, labels, table cells and chart axes at least **24 pt** (26–30 pt typical); source credits and figure captions at least **22 pt**; callouts about 36 pt (never below 28). When a paper figure's own labels are too small to read from the back row, enlarge the figure, crop it, or redraw it.
+- **Review pass:** after the deck is built, read each rendered slide as an audience member who has not heard the script. What do they read first? Can they read every line in about three seconds? Then run `scripts/audit_text.py deck.pptx`: it lists runs below the size floors and paragraphs that read as sentences. Fix every `SMALL` and `LONG` line except author lists and source credits.
+
+**Counter-example:** a recap slide carried "In-Context Learning (ICL): without changing the model's weights, it learns a new task only from examples placed in its context, just like giving a language model one worked example". The audience reads instead of listening, and the line wraps across the slide. Fix: "In-Context Learning (ICL): weights fixed, learns from examples" on the slide, the full sentence in the notes. See `references/examples.md` for more before / after pairs.
+
 ---
 
 ## 4. Terms: full name and plain explanation on first use
@@ -142,6 +157,21 @@ The goal is for the room to think together, not one person talking while everyon
 - Put a QR code and the event code near the start; put a small QR code in the corner of poll slides. Draw it with `qr()` from `slide_kit.py`.
 - If the user has not given the event link or code, ask once when they are present; otherwise use `qr()` with empty data (it draws a labelled placeholder), write "event code to be filled in" in the notes, and list every placeholder in the handoff.
 - Use "guess, then reveal": a question slide (options + a related image, no answer) → a reveal slide (red callout with the answer + the evidence).
+
+### Choosing a poll question
+
+A poll costs about three minutes, so it earns its place only if the room learns something from the reveal. Pick a question that:
+
+1. **has an answer in the source**: a number, a comparison, a result, not only an opinion;
+2. **most people will guess wrong, or split on**: the surprise is what makes the point stick;
+3. **is not given away** by the talk title, the event description, or the slide just before it (asking "does longer context help?" in a talk titled "Context Scaling" teaches nothing);
+4. **opens the next key point**: the reveal slide is the first slide of that point, so the answer leads straight into the explanation.
+
+- Good sources: a naive baseline that backfires ("add one past frame: better or worse?"), a threshold ("how long / how many before X beats Y?"), which of several methods fails, a surprising cost.
+- An opinion poll (e.g. the same open question as pre-test and post-test) is worth it only when the talk changes the evidence the audience has. If the event description or the storyline already answers it, replace it.
+- Options use units the audience can feel (seconds, minutes, dollars), with the technical unit in brackets ("about 1 minute (2K steps)").
+- When a poll is judged weak, **replace it with a better question**; do not drop the interaction unless the user asks to remove it.
+- In the notes, write the correct answer and the wrong answer most people are expected to pick, so the speaker can contrast them at the reveal.
 - Formats: the same question as a pre-test and post-test (to see whether opinions changed), predict a number, guess the best / worst, word cloud, a 60-second discuss-with-your-neighbour open question.
 - Terms in poll options follow section 4 as well.
 - In the notes, write how to set up the tool, the expected answers, and follow-up questions after the reveal.
@@ -172,7 +202,7 @@ The goal is for the room to think together, not one person talking while everyon
 
 ## 10. Building PPTX files
 
-When building with python-pptx, read `references/pptx-techniques.md` first and use the helpers in this skill's `scripts/slide_kit.py` (template header / title / footer, callouts that fit their text and can be centred, curved and block arrows, red frames, dimming masks and hiding, native bar charts with negative values, real bullet lists, titled blocks in the template's colours, autoplaying and looping videos, QR codes, coordinate conversion). Use `bullets()` for lists instead of typing '•' (a typed bullet has different widths in CJK and Latin text, so wrapped lines misalign). Check the result with `scripts/render_check.py`: it renders every page, a thumbnail sheet for layout, and `footers.png`, a full-resolution strip of every footer.
+When building with python-pptx, read `references/pptx-techniques.md` first and use the helpers in this skill's `scripts/slide_kit.py` (template header / title / footer, callouts that fit their text and can be centred, curved and block arrows, red frames, dimming masks and hiding, native bar charts with negative values, real bullet lists, titled blocks in the template's colours, autoplaying and looping videos, QR codes, coordinate conversion). Use `bullets()` for lists instead of typing '•' (a typed bullet has different widths in CJK and Latin text, so wrapped lines misalign). Check the result with `scripts/render_check.py`: it renders every page, a thumbnail sheet for layout, and `footers.png`, a full-resolution strip of every footer. Then run `scripts/audit_text.py` for font sizes and sentence-like text (section 3a).
 
 ## 11. Final checklist
 
@@ -189,3 +219,6 @@ When building with python-pptx, read `references/pptx-techniques.md` first and u
 - [ ] Numbers match the source; build steps share page numbers
 - [ ] Videos embedded with `video()` and a poster frame; playback tested in PowerPoint, or the handoff says it was not tested
 - [ ] Lists use `bullets()` (no typed '•'); every QR or event-code placeholder is listed in the handoff
+- [ ] Every on-slide line is a keyword or number, not a sentence; every slide re-read from the audience's seat; `audit_text.py` reports no `SMALL` or `LONG` lines except author lists and source credits
+- [ ] Body text ≥ 24 pt, captions ≥ 22 pt, callouts about 36 pt
+- [ ] Every poll has an answer in the source, is not given away by the title or description, is likely to be guessed wrong, and its reveal opens the next key point

@@ -10,7 +10,7 @@ Project folder + asset collection with source attribution · audience-first pape
 ![Skills](https://img.shields.io/badge/skills-3-8A63D2)
 ![Python](https://img.shields.io/badge/python-3-3776AB?logo=python&logoColor=white)
 ![python-pptx](https://img.shields.io/badge/python--pptx-helpers-B7472A?logo=microsoftpowerpoint&logoColor=white)
-![Version](https://img.shields.io/badge/release-v0.4.0-success)
+![Version](https://img.shields.io/badge/release-v0.5.0-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 **English** · [繁體中文](README.zh-TW.md)
@@ -53,7 +53,7 @@ Works in **Claude Code**, **claude.ai** and the **Claude desktop app**.
 | Skill | What it does | Version |
 | --- | --- | :---: |
 | [`paper-project-setup`](skills/paper-project-setup/SKILL.md) | Sets up a project folder for one paper or topic and collects its media (PDF, figures, demo videos, chart data, screenshots) with source attribution: downloads automatically where possible (direct, released files, browser), asks only for what truly cannot be fetched, and keeps a typed manifest of every asset plus a missing list. | v0.2.1 |
-| [`paper-discussion-slides`](skills/paper-discussion-slides/SKILL.md) | Designs paper-discussion / journal-club decks (PPTX or Canva) that put audience understanding first. Ships a reference template deck, a `chrome()` helper for template header / footer, and a render checker for page renders, thumbnail sheets and footer zoom strips. | v0.2.0 |
+| [`paper-discussion-slides`](skills/paper-discussion-slides/SKILL.md) | Designs paper-discussion / journal-club decks (PPTX or Canva) that put audience understanding first. Ships a reference template deck, a `chrome()` helper for template header / footer, a render checker for page renders, thumbnail sheets and footer zoom strips, and a text audit that flags small fonts and sentence-like slide text; guides poll-question choice. | v0.3.0 |
 | [`talk-event-promo`](skills/talk-event-promo/SKILL.md) | Makes the promotion for an upcoming talk: a 1600×640 event cover (input→output / before→after comparison, or a process showcase with the tool's own UI) rendered by `make_cover.py` and checked at thumbnail size, plus a plain-language title and a two-to-three-sentence description in the group's format. | v0.1.0 |
 
 More paper-sharing skills will be added over time.
@@ -134,6 +134,8 @@ check   <dir>                               verify every manifest file exists an
 
 **`render_check.py`** — page renders, a thumbnail sheet and a footer zoom strip, so frames and alignment are checked visually rather than assumed.
 
+**`audit_text.py`** — lists text below the size floors (24 pt body, 22 pt captions) and paragraphs that read as sentences instead of keywords.
+
 </details>
 
 ---
@@ -157,7 +159,8 @@ check   <dir>                               verify every manifest file exists an
         └── scripts/
             ├── slide_kit.py              # python-pptx helpers, incl. chrome()
             ├── build_sample_template.py  # rebuilds assets/sample-template.pptx
-            └── render_check.py           # page renders, thumbnail sheet, footer zoom strip
+            ├── render_check.py           # page renders, thumbnail sheet, footer zoom strip
+            └── audit_text.py             # small fonts and sentence-like slide text
     └── talk-event-promo/
         ├── SKILL.md                 # cover layout choice, description length, checks
         ├── references/examples.md   # two finished promotions (compare, showcase)
@@ -195,7 +198,7 @@ If these skills help your talks or research, please cite them:
   title   = {{paper-sharing-skills: Audience-First Claude Skills for Sharing Research Papers}},
   year    = {2026},
   url     = {https://github.com/whats2000/paper-sharing-skills},
-  version = {0.4.0}
+  version = {0.5.0}
 }
 ```
 

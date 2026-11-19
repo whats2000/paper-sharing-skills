@@ -44,6 +44,7 @@ Other scripts:
 |---|---|
 | `build_sample_template.py [out.pptx]` | Rebuild `assets/sample-template.pptx`, the reference deck for the template |
 | `render_check.py deck.pptx [out_dir]` | Render pages, a thumbnail sheet, and `footers.png` (every footer at full resolution) |
+| `audit_text.py deck.pptx [--min-size 24] [--caption-size 22] [--max-chars 18]` | List text runs below the size floors (footer excluded) and paragraphs that read as sentences; exit status 1 when anything needs fixing |
 
 Example:
 
