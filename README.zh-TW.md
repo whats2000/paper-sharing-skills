@@ -10,7 +10,7 @@
 ![Skills](https://img.shields.io/badge/skills-3-8A63D2)
 ![Python](https://img.shields.io/badge/python-3-3776AB?logo=python&logoColor=white)
 ![python-pptx](https://img.shields.io/badge/python--pptx-helpers-B7472A?logo=microsoftpowerpoint&logoColor=white)
-![Version](https://img.shields.io/badge/release-v0.5.0-success)
+![Version](https://img.shields.io/badge/release-v0.6.0-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 [English](README.md) · **繁體中文**
@@ -53,7 +53,7 @@
 | Skill | 功能 | 版本 |
 | --- | --- | :---: |
 | [`paper-project-setup`](skills/paper-project-setup/SKILL.md) | 為一篇論文或一個主題建立專案資料夾，收集 PDF、圖片、展示影片、圖表數據、截圖並記錄來源：能自動下載就自動（直接下載、釋出檔案、瀏覽器），真的抓不到才請使用者幫忙，並維護每個素材的 manifest 與缺漏清單。 | v0.2.1 |
-| [`paper-discussion-slides`](skills/paper-discussion-slides/SKILL.md) | 製作以觀眾理解為核心的論文討論／讀書會簡報（PPTX 或 Canva）。附參考模板簡報、繪製模板頁首頁尾的 `chrome()`，產生頁面渲染、縮圖總覽與頁尾放大條的檢查工具，以及標出過小字體與句子式文字的文字檢查；並指引如何挑選有意義的投票題目。 | v0.3.0 |
+| [`paper-discussion-slides`](skills/paper-discussion-slides/SKILL.md) | 製作以觀眾理解為核心的論文討論／讀書會簡報（PPTX 或 Canva）。附參考模板簡報、繪製模板頁首頁尾的 `chrome()`，產生頁面渲染、縮圖總覽與頁尾放大條的檢查工具，以及標出過小字體與句子式文字的文字檢查；並指引如何挑選有意義的投票題目，以及先寫故事、社群分享風格（主線不放公式、口語短講稿、技術細節放備用頁）。 | v0.4.0 |
 | [`talk-event-promo`](skills/talk-event-promo/SKILL.md) | 為即將舉辦的分享做宣傳：1600×640 活動封面（輸入→輸出／前後對照，或用工具本身介面的流程展示），由 `make_cover.py` 繪製並檢查縮圖是否看得清楚，再寫白話標題與兩三句、符合社群格式的活動簡介。 | v0.1.0 |
 
 之後會陸續加入更多論文分享相關的 skill。
@@ -140,7 +140,7 @@ flowchart LR
   title   = {{paper-sharing-skills: Audience-First Claude Skills for Sharing Research Papers}},
   year    = {2026},
   url     = {https://github.com/whats2000/paper-sharing-skills},
-  version = {0.4.0}
+  version = {0.6.0}
 }
 ```
 

@@ -1,6 +1,6 @@
 # Positive and negative examples
 
-These examples come from real decks and the feedback after presenting them. Use them as references when deciding whether to split a concept and how to present it.
+These examples come from real decks and the feedback after presenting them. Use them as references when deciding whether to split a concept and how to present it. Learn the reason each one worked or failed; do not copy its look (a grey code box, a particular callout text) onto slides where that reason does not apply.
 
 ## Positive: needs step-by-step guidance, so splitting is far better than one slide
 
@@ -15,7 +15,7 @@ These four steps form one path of thought: familiar example → question → pri
 
 ## Positive: a relationship understood at a glance, so do not split
 
-One slide on "compositional generalization" whose point is "A + B = the ability to do A and then continue with B". On the left, a video of demonstration A (unzipping a pencil pouch); a "+"; a video of demonstration B (taking money out of the pouch); a "⇒"; on the far right, a video of the model chaining A and B into one continuous behaviour. Each video has a one-line grey caption, and one line of key message runs below: "two independent demos → one continuous behaviour (with transitions, regrasps and recovery)". The three videos sit side by side and play at the same time, so the audience sees at once that "the two on the left = the one on the right".
+One slide on "compositional generalization" whose point is "A + B = the ability to do A and then continue with B". On the left, a video of demonstration A (unzipping a pencil pouch); a "+"; a video of demonstration B (taking money out of the pouch); a "⇒"; on the far right, a video of the model chaining A and B into one continuous behaviour. Each video has a one-line grey caption, and one line of key message runs below: "two independent demos become one continuous behaviour". The three videos sit side by side and play at the same time, so the audience sees at once that "the two on the left = the one on the right".
 
 The concept needs no detailed explanation; the point is the relationship itself. Showing only A, or A + B, leaves nothing to say (one sentence per step), and splitting breaks the equation. **When the layout itself is the explanation, use one slide.**
 
@@ -42,8 +42,8 @@ The slide text should be the keyword skeleton of the script. Before and after fr
 |---|---|
 | "In-Context Learning (ICL): without changing the weights, it learns a new task only from examples placed in its context, just like giving a language model one worked example." | "In-Context Learning (ICL): weights fixed, learns from examples" |
 | "But the update rule is a hand-designed linear rule, and the authors argue it cannot extract the structure of long, repetitive streams." | "but hand-designed linear update, no gradient descent" |
-| "DAgger: when the robot errs a human takes over and demonstrates the fix, then the fixes are used for training." | "DAgger: human fixes errors → train on fixes" |
+| "DAgger: when the robot errs a human takes over and demonstrates the fix, then the fixes are used for training." | "DAgger: human fixes errors, robot trains on them" |
 | "'Latency does not grow' comes from the architecture; the main text reports no measured latency." | "Latency: no measured numbers" |
-| A poll slide with two lines of set-up before the question | "Add 1 past frame → Pup Go Car score?" (set-up spoken) |
+| A poll slide with two lines of set-up before the question | "Add 1 past frame: Pup Go Car score?" (set-up spoken) |
 
 Running `scripts/audit_text.py` on the first draft flagged 38 sentence-like lines; after the rewrite only the author list and source credits remained.

@@ -226,7 +226,7 @@ def dim_area(slide, x, y, w, h, fill='FFFFFF', opacity=80000):
     return els
 
 
-def hide(slide, x, y, w, h, fill='FFFFFF', opacity=92000):
+def hide(slide, x, y, w, h, fill='FFFFFF', opacity=100000):
     """cover a part of an image that has NOT been explained yet (build by subtraction on a single image).
 
     This is the opposite of `dim`: `dim` fades what was already discussed, `hide` covers what is
