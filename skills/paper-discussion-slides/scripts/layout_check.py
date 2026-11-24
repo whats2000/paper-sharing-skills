@@ -8,6 +8,10 @@ query real boundaries instead of guessing them. Reports, per slide:
   OFF      an element that runs past the slide edge (or into the footer band) and gets cut off
   OVERLAP  two text-bearing elements that overlap (neither contains the other)
   ARROW    an arrow whose head does not land on a callout or text box (within 24 px)
+  CROWD    a callout lying on a picture, chart or other content (a callout needs its own free space)
+  SHORT    an arrow shorter than 60 px: too short to lead the eye from the figure to the callout
+  BLOCK    a thick block arrow lying on a picture or chart: use a thin arrow there
+  SLANT    a straight arrow running on a slant: a diagonal pull-out takes a curved arrow
 --list prints every element with its name, box (x, y, w, h) and first words, for querying.
 Exit status 1 when anything is reported.
 """
@@ -118,11 +122,53 @@ def main():
             pt = head(e, k)
             if pt and not any(inside(pt, b, 24) for b in targets if b != e['box']):
                 out.append(f'  ARROW    {e["name"]} head at ({int(pt[0])}, {int(pt[1])}) lands on no callout')
-        rep = [o for o in out if not o.startswith('  ') or o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW')]
+        def is_callout(e):
+            if (e['el'].find('.//p:cNvPr', NS).get('descr') or '').startswith('annotate') and e['text']:
+                return True
+            return bool(e['text']) and e['el'].find('.//a:rPr/a:solidFill/a:srgbClr[@val="FF5757"]', NS) is not None
+        hidden = [e['box'] for e in body if e['el'].find('.//p:cNvPr', NS).get('descr') == 'hide']
+        callouts = [e for e in body if is_callout(e) and not e['faded']]
+        for c in callouts:
+            cb = c['box']
+            if any(contains(h, cb) for h in hidden):
+                continue
+            for e in body:
+                if e is c or e['faded'] or e['tag'] not in ('pic', 'sp', 'graphicFrame') or is_callout(e):
+                    continue
+                if e['el'].find('.//p:cNvPr', NS).get('descr') == 'hide' or e['prst'] in ('rightArrow', 'leftArrow', 'upArrow', 'downArrow', 'custom'):
+                    continue
+                if not e['text'] and e['el'].find('.//p:spPr/a:solidFill', NS) is None and e['tag'] == 'sp':
+                    continue                       # outline-only shapes such as frames
+                if overlap(cb, e['box']) and not contains(e['box'], cb) and not contains(cb, e['box']):
+                    out.append(f'  CROWD    callout "{c["text"][:20]}" lies on {e["name"]} {tuple(int(v) for v in e["box"])}')
+                elif overlap(cb, e['box']) and contains(e['box'], cb) and e['tag'] == 'pic':
+                    out.append(f'  CROWD    callout "{c["text"][:20]}" sits on top of picture {e["name"]}')
+        for e in body:
+            x, y, w, h = e['box']
+            ln = {'rightArrow': w, 'leftArrow': w, 'upArrow': h, 'downArrow': h}.get(e['prst'])
+            if ln is None and e['prst'] == 'custom' and e['el'].find('.//a:tailEnd', NS) is not None:
+                ln = (w * w + h * h) ** 0.5
+            if ln is not None and ln < 60:
+                out.append(f'  SHORT    {e["name"]} is {int(ln)} px long')
+            if e['prst'] in ('rightArrow', 'leftArrow', 'upArrow', 'downArrow'):
+                for o in body:
+                    if o['tag'] == 'pic' and overlap(e['box'], o['box']):
+                        out.append(f'  BLOCK    {e["name"]} lies on picture {o["name"]}')
+                        break
+            if e['prst'] == 'custom' and e['el'].find('.//a:tailEnd', NS) is not None:
+                pts = e['el'].findall('.//a:custGeom//a:pt', NS)
+                if len(pts) >= 3:
+                    xy = [(int(q.get('x')), int(q.get('y'))) for q in pts]
+                    (x0, y0), (x1, y1), (xm, ym) = xy[0], xy[-1], xy[len(xy) // 2]
+                    L = ((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5 or 1
+                    dev = abs((x1 - x0) * (y0 - ym) - (x0 - xm) * (y1 - y0)) / L
+                    if dev < 0.02 * L and min(abs(x1 - x0), abs(y1 - y0)) > 0.25 * L:
+                        out.append(f'  SLANT    {e["name"]} is a straight arrow on a slant')
+        rep = [o for o in out if not o.startswith('  ') or o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW', 'CROWD', 'SHORT', 'BLOCK', 'SLANT')]
         if out:
             print(f'slide {i}')
             print('\n'.join(out))
-        issues += sum(1 for o in rep if o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW'))
+        issues += sum(1 for o in rep if o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW', 'CROWD', 'SHORT', 'BLOCK', 'SLANT'))
     print(f'{issues} issue(s)' if issues else 'no issues')
     sys.exit(1 if issues else 0)
 

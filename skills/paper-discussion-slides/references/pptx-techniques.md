@@ -20,7 +20,7 @@ build_steps(prs, draw, 4, scripts=[s1, s2, s3, s4])
 ```
 - Rounded corners: set the `ROUNDED_RECTANGLE` adjustment from the box size.
 - Curved arrows: sample about 30 points of a quadratic Bézier curve and draw them as an open polyline with `build_freeform`; no fill, thick red line (about 10 pt), and add `a:tailEnd type="triangle"` and `cap="rnd"` to `a:ln`. Place the control point at the midpoint, offset perpendicular to the line by about 0.35–0.45 × the distance between the ends.
-- Block arrows: `MSO_SHAPE.DOWN_ARROW` / `RIGHT_ARROW` etc., solid light grey-blue, no outline.
+- Block arrows: `MSO_SHAPE.DOWN_ARROW` / `RIGHT_ARROW` etc., solid light grey-blue, no outline; straight and only through free space, never on top of a picture or chart (use a thin arrow there).
 - Check every slide by converting to PDF with LibreOffice and rendering pages with pdftoppm.
 
 ## Helpers
@@ -31,16 +31,16 @@ build_steps(prs, draw, 4, scripts=[s1, s2, s3, s4])
 |---|---|
 | `text(slide, x, y, w, h, paras, size, ...)` | Text box; `paras` is a string, a list of strings, or a list of `(text, style)` runs |
 | `rect(slide, x, y, w, h, fill, line, radius)` | Rounded rectangle |
-| `callout(slide, x, y, lines, size=36, anchor=None, valign='t')` | Red callout whose box fits its text; `anchor` `'l'`/`'r'`/`'c'` makes `x` the left edge, right edge or centre; `valign` `'t'`/`'m'`/`'b'` does the same for `y`; returns `(elements, box)` |
+| `callout(slide, x, y, lines, size=36, anchor=None, valign='t', color=CALLRED)` | Callout whose box fits its text; red text when it is the key point, `color=INK` for a supporting remark with its key word red via runs `[('only ', {}), ('19.8%', {'color': CALLRED})]`; `anchor` `'l'`/`'r'`/`'c'` makes `x` the left edge, right edge or centre; `valign` `'t'`/`'m'`/`'b'` does the same for `y`; returns `(elements, box)` |
 | `callout_size(lines, size=36)` | `(w, h)` a callout will have, to position it before drawing |
 | `frame(slide, x, y, w, h)` | Red frame |
 | `sub(box, tl, br, pad)` | Convert fractional coordinates measured on the original asset into slide coordinates |
 | `arc_arrow(slide, p0, p1, bend)` | Red curved arrow; the sign of `bend` sets the direction, near 0 is straight |
-| `block_arrow(slide, x, y, w, h, direction)` | Solid light grey-blue block arrow |
+| `block_arrow(slide, x, y, w, h, direction)` | Solid light grey-blue block arrow: straight, free space only (flow between pieces, or a lined-up callout) |
 | `dim_area(slide, x, y, w, h, opacity=80000)` | Default way to fade already-discussed content: a white mask (80% opacity, no outline, no shadow) over a whole region; survives PDF export because each build step is its own slide |
 | `dim(elements, amt)` | Fade a single element in place (alpha on its own picture / colours) |
 | `build_steps(prs, draw, steps, scripts)` | Make one slide's build steps the designer's way: `draw(slide)` draws the complete slide and returns its parts as `(elements, box, appear, focus_end)`; the helper makes one slide per step, deletes parts not yet said, removes annotations whose step has passed (`box='remove'`) and masks discussed content (`box='auto'`, measured from the real elements), keeping the current part on top |
-| `annotate(slide, target, lines, side, kind, outside=None, frame_target=False)` | Callout + arrow (+ frame) as one unit: callout lined up with the target on `side`, kept inside the slide (or just outside the figure `outside`), arrow from the target's edge to the callout; `kind='therefore'` grey-blue block, `'discuss'` red curve; returns `(elements, callout_box)` |
+| `annotate(slide, target, lines, side, style='block', color='grey', frame_target=False, min_arrow=90)` | Callout + arrow (+ frame) as one unit; `style='block'` falls back to a thin arrow when the callout cannot line up or the arrow would lie on a figure, `color` is `'grey'` or `'red'` (muted); the first call fixes style and colour for the slide and its steps; searches for free space (preferred side first) that touches no picture, chart or text, at least `min_arrow` px from the target (areas covered by `hide()` count as free), preferring the place whose arrow crosses the least content, and warns when there is none; returns `(elements, callout_box)` |
 | `box_of(el)`, `bbox(elements, pad)` | Real box (px) of an element or a group, read from the slide, to place things by computation |
 | `hide(slide, x, y, w, h)` | Cover a part of an image that has not been explained yet (build by subtraction on one image) |
 | `picture(slide, path, x, y, w, h)` | Fit an image into a box keeping its aspect ratio; returns the box it actually covers (for `sub`) |
@@ -61,7 +61,7 @@ Other scripts:
 |---|---|
 | `build_sample_template.py [out.pptx]` | Rebuild `assets/sample-template.pptx`, the reference deck for the template |
 | `render_check.py deck.pptx [out_dir]` | Render pages, a thumbnail sheet, and `footers.png` (every footer at full resolution) |
-| `layout_check.py deck.pptx [--slide N] [--list]` | Real box of every element (`--list`) and layout faults: `OFF` (runs off the slide), `OVERLAP` (text on text), `ARROW` (head lands on no callout) |
+| `layout_check.py deck.pptx [--slide N] [--list]` | Real box of every element (`--list`) and layout faults: `OFF` (runs off the slide), `OVERLAP` (text on text), `ARROW` (head lands on no callout), `CROWD` (callout lies on content), `SHORT` (arrow under 60 px), `BLOCK` (block arrow on a figure), `SLANT` (straight arrow on a slant) |
 | `audit_text.py deck.pptx [--min-size 24] [--caption-size 22] [--max-chars 18]` | List text runs below the size floors (footer excluded) and paragraphs that read as sentences; exit status 1 when anything needs fixing |
 
 Example:
@@ -76,8 +76,6 @@ s = blank_slide(prs)
 chrome(s, 'The only loss', 'Short Deck Title', 'Author / Institution, 2026', page=9, total=17)
 _, r = picture(s, 'chart.png', 72, 222, 1150, 770)
 f = sub(r, (0.0, 0.37), (0.95, 0.43), pad=6)      # fractions measured on the original image
-frame(s, *f)
-_, b = callout(s, 1290, f[1] + f[3] / 2 - 85, ['The only loss:', '80.0 vs 81.3'])
-block_arrow(s, f[0] + f[2] + 8, f[1] + f[3] / 2 - 30, b[0] - (f[0] + f[2]) - 16, 60, 'right')
+annotate(s, f, ['The only loss:', '80.0 vs 81.3'], side='right', frame_target=True)
 prs.save('out.pptx')
 ```

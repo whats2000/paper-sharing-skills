@@ -2,7 +2,7 @@
 
 It shows the template chrome (header bands, title, footer halves with vertically centred
 text) and the standard building blocks: a callout connected by a curved arrow, a red frame
-with a block arrow to its callout, a dimming mask over already-discussed content, and two build steps that share one page
+with its red arrow to a callout, a dimming mask over already-discussed content, and two build steps that share one page
 number. Open it to see how a finished slide should look, or copy its geometry.
 
     python build_sample_template.py [out.pptx]
@@ -40,7 +40,7 @@ def cover(prs):
 
 def content(prs, step):
     s = blank_slide(prs)
-    chrome(s, 'Slide title: what this slide says', DECK, CREDIT, page=2, total=TOTAL)
+    chrome(s, 'Topic or question, not the answer', DECK, CREDIT, page=2, total=TOTAL)
     fig = placeholder(s, 72, 240, 1000, 560, 'figure from the source')
     text(s, 72, 820, 1000, 40, 'Fig. N  caption in muted grey; "redrawn from the paper\'s Fig. N data" if redrawn',
          size=20, color=MUTED)
@@ -54,10 +54,10 @@ def content(prs, step):
         rect(s, f[0], f[1], f[2], f[3], fill='C9D7EA', radius=12)
         frame(s, *f)
         _, b = callout(s, 1180, 470, ['This part means …'])
-        block_arrow(s, f[0] + f[2] + 12, f[1] + f[3] / 2 - 30, b[0] - (f[0] + f[2]) - 24, 60, 'right')
+        arc_arrow(s, (f[0] + f[2] + 12, f[1] + f[3] / 2), (b[0] - 10, b[1] + b[3] / 2), bend=0.3)
         notes(s, 'Build step 2 of 2: the previous callout and arrow are gone; the figure is dimmed with dim_area() only '
                  'to show the mask (white, 80% opacity, no outline, no shadow); normally a frame circles part of an '
-                 'image and nothing is dimmed. Block arrow: this, therefore.')
+                 'image and nothing is dimmed. Every callout arrow is the red curve.')
     return s
 
 
