@@ -214,6 +214,14 @@ def dim(elements, amt=30000):
     return elements
 
 
+def _plain(el):
+    """drop the shape's theme style reference, so no renderer adds a theme shadow or outline
+    (a shadow under a semi-transparent white mask shows through as a grey box)."""
+    st = el.find(qn('p:style'))
+    if st is not None:
+        el.remove(st)
+
+
 def dim_area(slide, x, y, w, h, fill='FFFFFF', opacity=80000):
     """fade a region that was ALREADY discussed: a white mask over it (default for dimming).
 
@@ -225,6 +233,7 @@ def dim_area(slide, x, y, w, h, fill='FFFFFF', opacity=80000):
     els = rect(slide, x, y, w, h, fill=fill, radius=0)
     for c in els[0].iter(qn('a:srgbClr')):
         c.append(c.makeelement(qn('a:alpha'), {'val': str(opacity)}))
+    _plain(els[0])
     return els
 
 
@@ -237,6 +246,7 @@ def hide(slide, x, y, w, h, fill='FFFFFF', opacity=100000):
     els = rect(slide, x, y, w, h, fill=fill, radius=0)
     for c in els[0].iter(qn('a:srgbClr')):
         c.append(c.makeelement(qn('a:alpha'), {'val': str(opacity)}))
+    _plain(els[0])
     return els
 
 
@@ -273,6 +283,195 @@ def hbars(slide, x, y, rows, label_w=560, bar_w=760, vmax=100, vmin=0, bar_h=60,
             text(slide, vx, yy, tw + 20, bar_h, vt, size=size + 2, bold=True, anchor='m')
             edge = vx + tw
         out[lab] = (left, yy, bw, bar_h, edge)
+    return out
+
+
+def box_of(el, slide=None):
+    """(x, y, w, h) in px of one shape element (sp, pic, cxnSp, graphicFrame or group), or None."""
+    xf = el.find('.//' + qn('a:xfrm'))
+    if xf is None:
+        xf = el.find('.//' + qn('p:xfrm'))
+    if xf is None:
+        return None
+    off, ext = xf.find(qn('a:off')), xf.find(qn('a:ext'))
+    if off is None or ext is None:
+        return None
+    k = 9525.0 if slide is None else _scale(slide)
+    return (int(off.get('x')) / k, int(off.get('y')) / k, int(ext.get('cx')) / k, int(ext.get('cy')) / k)
+
+
+def bbox(elements, slide=None, pad=0):
+    """union (x, y, w, h) in px of several shape elements, grown by `pad` on every side."""
+    bs = [b for b in (box_of(e, slide) for e in elements if e is not None) if b]
+    if not bs:
+        return None
+    x0 = min(b[0] for b in bs) - pad
+    y0 = min(b[1] for b in bs) - pad
+    x1 = max(b[0] + b[2] for b in bs) + pad
+    y1 = max(b[1] + b[3] for b in bs) + pad
+    return (x0, y0, x1 - x0, y1 - y0)
+
+
+CONTENT = dict(x0=48, y0=215, x1=1872, y1=1025)   # area below the title and above the footer
+
+
+def annotate(slide, target, lines, side='below', kind='therefore', gap=80, size=36, frame_target=False, outside=None):
+    """explain one thing with a callout: target -> arrow -> callout, drawn as ONE unit.
+
+    target: (x, y, w, h) px of what is being explained (a bar, a point, part of a figure);
+    side:   where the callout goes: 'below', 'above', 'right' or 'left' of the target;
+    kind:   'therefore' = solid grey-blue block arrow (a direct consequence),
+            'discuss'   = red curved arrow (the point is pulled out for discussion).
+    The callout is centred on the target along that side and kept inside the content area, and the
+    arrow runs from the target's edge to the middle of the callout's facing edge, so the arrowhead
+    always lands on the callout (reading order: figure first, then the explanation).
+    frame_target=True also draws a red frame around the target.
+    outside: (x, y, w, h) of the figure the target sits in (e.g. the chart's box from picture()).
+    The callout is then placed just outside that figure on `side`, still lined up with the target,
+    so it never hides the data; the arrow runs straight over the figure along the shortest path.
+    Without it the callout sits `gap` px from the target, which can cover the figure.
+    Returns (elements, callout_box); pass the elements to build_steps() as one part with box
+    'remove', so the frame, the arrow and the callout appear together and leave together when
+    the focus moves on."""
+    tx, ty, tw, th = target
+    cw, ch = callout_size(lines, size)
+    C = CONTENT
+    if kind == 'discuss':
+        gap = max(gap, 120)                      # a curve needs room, or it shrinks to a squiggle
+    ox, oy, ow, oh = outside if outside else target
+    g = 40 if outside else gap
+    if side in ('below', 'above'):
+        cx = tx + tw / 2 - cw / 2
+        cy = oy + oh + g if side == 'below' else oy - g - ch
+    else:
+        cy = ty + th / 2 - ch / 2
+        cx = ox + ow + g if side == 'right' else ox - g - cw
+    cx = max(C['x0'], min(cx, C['x1'] - cw))
+    cy = max(C['y0'], min(cy, C['y1'] - ch))
+    els = []
+    if frame_target:
+        els += frame(slide, *target)
+    cel, cbox = callout(slide, cx, cy, lines, size=size)
+    cx, cy, cw, ch = cbox
+    m = 8
+    if side in ('below', 'above'):
+        lo, hi = max(tx, cx), min(tx + tw, cx + cw)
+        ax = (lo + hi) / 2 if hi > lo else cx + cw / 2
+        y0, y1 = (ty + th + m, cy - m) if side == 'below' else (ty - m, cy + ch + m)
+        if kind == 'therefore':
+            top, h = min(y0, y1), abs(y1 - y0)
+            els += block_arrow(slide, ax - 30, top, 60, h, 'down' if side == 'below' else 'up')
+        else:
+            els += arc_arrow(slide, (tx + tw / 2, y0), (cx + cw / 2, y1), bend=0.25)
+    else:
+        lo, hi = max(ty, cy), min(ty + th, cy + ch)
+        ay = (lo + hi) / 2 if hi > lo else cy + ch / 2
+        x0, x1 = (tx + tw + m, cx - m) if side == 'right' else (tx - m, cx + cw + m)
+        if kind == 'therefore':
+            left, w = min(x0, x1), abs(x1 - x0)
+            els += block_arrow(slide, left, ay - 30, w, 60, 'right' if side == 'right' else 'left')
+        else:
+            els += arc_arrow(slide, (x0, ty + th / 2), (x1, cy + ch / 2), bend=0.25)
+    els += cel       # callout last, so it sits on top of the arrow's tip
+    return els, cbox
+
+
+def _outline_only(el):
+    """True for a shape drawn only by its outline (a red frame, a curved arrow): fade it, do not mask it."""
+    sp = el.find(qn('p:spPr'))
+    if sp is None or el.tag != qn('p:sp'):
+        return False
+    return sp.find(qn('a:solidFill')) is None and el.find('.//' + qn('a:t')) is None
+
+
+def build_steps(prs, draw, steps, scripts=None):
+    """Make the build steps of one slide the way a designer does by hand: build the complete slide,
+    copy it once per step, delete from each copy what has not been said yet, and lay a mask over
+    what was already discussed so the eye goes to the current part.
+
+    draw(slide) draws the COMPLETE slide (call chrome() inside it, with the same page for every
+    step) and returns a list of parts, each a tuple (elements, box, appear, focus_end):
+      elements   the XML elements a drawing function returned (callout, picture, text, arrow, ...);
+      box        what happens once the part is no longer the focus:
+                 'remove' for annotations: a callout with its arrow and frame (what annotate()
+                 returns) leaves with its step; it does not stay on later steps, faded or not;
+                 'auto' for content already discussed (a picture, a list item, a block): each
+                 filled element gets its own tight mask so it stays readable but quiet, and
+                 outline-only elements fade in place; or an explicit (x, y, w, h) in px; or None to never
+                 mask the part. Put a frame, its arrow and its callout in ONE part (annotate()
+                 returns them together) so they fade together;
+      appear     the first step (1-based) on which the part is shown;
+      focus_end  the last step on which the part is the focus; on later steps a dim_area() mask
+                 covers its box. None = never dimmed.
+    Anything draw() creates that is not in a part is shown on every step.
+    scripts: optional list of speaker scripts, one per step.
+    Masks never cover what is current: after the masks are drawn, the parts that are still the
+    focus are moved back on top. A warning is printed when a mask would cut through an element
+    that is not being faded, so check those steps.
+    Returns the list of step slides. Because every step is its own slide, the build survives
+    export to PDF and handouts."""
+    out = []
+    for k in range(1, steps + 1):
+        s = blank_slide(prs)
+        parts = draw(s) or []
+        masks, faded, live = [], set(), []
+        for els, box, appear, focus_end in parts:
+            gone = box == 'remove' and focus_end is not None and focus_end < k
+            if appear > k or gone:
+                for e in els:
+                    if e is not None and e.getparent() is not None:
+                        e.getparent().remove(e)
+            elif focus_end is not None and focus_end < k and box:
+                if box == 'auto':                # one tight mask per filled element; outlines fade in place
+                    for e in els:
+                        if e is None:
+                            continue
+                        if _outline_only(e):
+                            dim([e], 25000)
+                        else:
+                            b = box_of(e, s)
+                            if b:
+                                masks.append((b[0] - 4, b[1] - 4, b[2] + 8, b[3] + 8))
+                else:
+                    masks.append(box)
+                faded.update(id(e) for e in els if e is not None)
+            else:
+                live.append(els)
+        vids = _VIDEOS.get(id(s._element))
+        if vids:                                   # drop removed videos from the slide timing
+            alive = {e.get('id') for e in s._element.iter(qn('p:cNvPr'))}
+            _VIDEOS[id(s._element)] = [v for v in vids if v[0] in alive]
+            _video_timing(s)
+        tree = s.shapes._spTree
+        for b in masks:
+            dim_area(s, *b)
+            for e in list(tree):
+                if id(e) in faded or e.tag not in (qn('p:sp'), qn('p:pic'), qn('p:cxnSp'), qn('p:grpSp')):
+                    continue
+                eb = box_of(e, s)
+                if not eb or eb[1] * 1 >= 1035 or eb[3] <= 0:
+                    continue
+                ix = min(b[0] + b[2], eb[0] + eb[2]) - max(b[0], eb[0])
+                iy = min(b[1] + b[3], eb[1] + eb[3]) - max(b[1], eb[1])
+                inside = ix >= eb[2] - 2 and iy >= eb[3] - 2
+                live_ids = {id(x) for els in live for x in els if x is not None}
+                has_text = e.find('.//' + qn('a:t')) is not None
+                if (ix > 2 and iy > 2 and not inside and e.find('.//' + qn('a:alpha')) is None
+                        and (id(e) in live_ids or has_text)):
+                    name = e.find('.//' + qn('p:cNvPr')).get('name')
+                    print(f'build_steps: step {k}: mask {tuple(int(v) for v in b)} cuts through "{name}"')
+        for els in live:                         # current parts back on top of every mask
+            for e in els:
+                if e is not None and e.getparent() is tree:
+                    tree.remove(e)
+                    ext = tree.find(qn('p:extLst'))
+                    if ext is not None:
+                        ext.addprevious(e)
+                    else:
+                        tree.append(e)
+        if scripts:
+            notes(s, scripts[k - 1])
+        out.append(s)
     return out
 
 

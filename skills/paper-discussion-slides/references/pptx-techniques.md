@@ -3,7 +3,21 @@
 - Start every deck with `new_deck()` (default template) or `new_deck('their-template.pptx')` (the user's template; its masters, theme fonts and colours come along) and add slides with `blank_slide()`. Duplicate slides from the user's PPTX (deep-copy the `spTree` and remap the relationships, then delete the originals) only when it contains slides whose content should be reused, such as a fixed cover. `assets/sample-template.pptx` is a reference to look at, not a file to open and edit.
 - Embed videos with `video()`: it calls `add_movie` with a poster frame and rebuilds the slide's `<p:timing>` so that every video on the slide autoplays together when the slide appears and loops (muted by default). If a file is too large, re-encode with ffmpeg (e.g., crf 28, width 1280) or paper-project-setup's `asset_tools.py shrink`. LibreOffice renders only the poster, so test playback in PowerPoint.
 - Dimming: prefer a mask (`dim_area()`): a white rectangle whose `srgbClr` has `alpha` 80000, `a:ln` with `a:noFill`, and no inherited shadow, placed over the already-discussed region. To fade one element in place instead, add `alphaModFix` to an image's `blip`, and `alpha` to `srgbClr` colours (`dim()`).
-- Builds are separate slides, not in-slide animations, so every step is kept when the deck is exported to PDF or printed.
+- Builds are separate slides, not in-slide animations, so every step is kept when the deck is exported to PDF or printed. Use `build_steps()`; for example, a four-beat reveal:
+
+```python
+def draw(s):
+    chrome(s, 'Who annotates the data?', DECK, CREDIT, page=5, total=TOTAL)
+    me = text(s, 200, 330, 600, 80, 'Me?', size=40)
+    no, _ = picture(s, 'no.png', 1000, 260, 500, 300)
+    hired = text(s, 150, 700, 800, 80, 'We hired "expert" annotators', size=40)
+    floor, _ = picture(s, 'annotation_floor.jpg', 1000, 600, 600, 340)
+    return [(me, 'auto', 1, 2), (no, 'auto', 2, 2),   # content: shown from step 1 / 2, masked after step 2
+            (hired, None, 3, None), (floor, None, 4, None)]
+# an annotation (callout + arrow + frame from annotate()) uses 'remove': it is gone on the next step
+
+build_steps(prs, draw, 4, scripts=[s1, s2, s3, s4])
+```
 - Rounded corners: set the `ROUNDED_RECTANGLE` adjustment from the box size.
 - Curved arrows: sample about 30 points of a quadratic Bézier curve and draw them as an open polyline with `build_freeform`; no fill, thick red line (about 10 pt), and add `a:tailEnd type="triangle"` and `cap="rnd"` to `a:ln`. Place the control point at the midpoint, offset perpendicular to the line by about 0.35–0.45 × the distance between the ends.
 - Block arrows: `MSO_SHAPE.DOWN_ARROW` / `RIGHT_ARROW` etc., solid light grey-blue, no outline.
@@ -25,6 +39,9 @@
 | `block_arrow(slide, x, y, w, h, direction)` | Solid light grey-blue block arrow |
 | `dim_area(slide, x, y, w, h, opacity=80000)` | Default way to fade already-discussed content: a white mask (80% opacity, no outline, no shadow) over a whole region; survives PDF export because each build step is its own slide |
 | `dim(elements, amt)` | Fade a single element in place (alpha on its own picture / colours) |
+| `build_steps(prs, draw, steps, scripts)` | Make one slide's build steps the designer's way: `draw(slide)` draws the complete slide and returns its parts as `(elements, box, appear, focus_end)`; the helper makes one slide per step, deletes parts not yet said, removes annotations whose step has passed (`box='remove'`) and masks discussed content (`box='auto'`, measured from the real elements), keeping the current part on top |
+| `annotate(slide, target, lines, side, kind, outside=None, frame_target=False)` | Callout + arrow (+ frame) as one unit: callout lined up with the target on `side`, kept inside the slide (or just outside the figure `outside`), arrow from the target's edge to the callout; `kind='therefore'` grey-blue block, `'discuss'` red curve; returns `(elements, callout_box)` |
+| `box_of(el)`, `bbox(elements, pad)` | Real box (px) of an element or a group, read from the slide, to place things by computation |
 | `hide(slide, x, y, w, h)` | Cover a part of an image that has not been explained yet (build by subtraction on one image) |
 | `picture(slide, path, x, y, w, h)` | Fit an image into a box keeping its aspect ratio; returns the box it actually covers (for `sub`) |
 | `hbars(slide, x, y, rows, vmin=0, vmax=100, ...)` | Native horizontal bar chart; `vmin < 0` draws a zero line and negative bars; returns each bar's position (for arrows) |
@@ -44,6 +61,7 @@ Other scripts:
 |---|---|
 | `build_sample_template.py [out.pptx]` | Rebuild `assets/sample-template.pptx`, the reference deck for the template |
 | `render_check.py deck.pptx [out_dir]` | Render pages, a thumbnail sheet, and `footers.png` (every footer at full resolution) |
+| `layout_check.py deck.pptx [--slide N] [--list]` | Real box of every element (`--list`) and layout faults: `OFF` (runs off the slide), `OVERLAP` (text on text), `ARROW` (head lands on no callout) |
 | `audit_text.py deck.pptx [--min-size 24] [--caption-size 22] [--max-chars 18]` | List text runs below the size floors (footer excluded) and paragraphs that read as sentences; exit status 1 when anything needs fixing |
 
 Example:

@@ -9,6 +9,9 @@ Reports, per slide:
   LONG    paragraphs (at body size or larger) that read as sentences rather than keywords: more than --max-chars
           characters (a CJK character counts 1, a Latin word counts 2), or containing
           sentence punctuation (。；, ——, or two or more ，). Titles allow 1.5x the length.
+  HOOK    a question line in the lower half of the slide that is visible on the first step of a slide
+          (or on a slide with no build steps): a hook for the next slide shown before the speaker reaches it.
+          Reveal it as the last step (build_steps). Build steps are recognised by a shared footer page number.
   ARROW   a typed arrow (→ ⇒ ->) in a line of words (CJK text or two or more English words); write the
           connecting word or draw the arrow as a shape. Arrows in equations (no words around them) pass.
 
@@ -50,8 +53,19 @@ def main():
     px = prs.slide_width / 1920                     # EMU per canvas px
     k = Emu(prs.slide_width).inches / 20            # point scale relative to a 20-inch slide
     issues = 0
+    pages = []                                       # footer page number of each slide (build steps share one)
+    for slide in prs.slides:
+        num = None
+        for sh in slide.shapes:
+            if sh.has_text_frame and sh.top is not None and sh.top / px >= FOOTER_TOP_PX - 2:
+                m = re.match(r'\s*(\d+)\s*/\s*\d+\s*$', sh.text_frame.text)
+                if m:
+                    num = m.group(1)
+        pages.append(num)
     for i, slide in enumerate(prs.slides, 1):
         out = []
+        first_step = pages[i - 1] is None or i == 1 or pages[i - 2] != pages[i - 1]
+        last_step = pages[i - 1] is None or i == len(pages) or pages[i] != pages[i - 1]
         for sh in slide.shapes:
             if not sh.has_text_frame or sh.top is None:
                 continue
@@ -73,6 +87,9 @@ def main():
                 w = weight(t)
                 if big >= a.min_size and (w > limit or sentence_like(t)):   # captions/credits exempt
                     out.append(f'  LONG     {w:3d}     {t[:60]}')
+                if (first_step and big >= a.min_size and big < TITLE_MIN_PT and sh.top / px > 540
+                        and re.search(r'[?？]\s*$', t) and not (last_step and len(slide.shapes) <= 4)):
+                    out.append(f'  HOOK             {t[:60]}')
                 wordy = re.search(r'[\u4e00-\u9fff]', t) or len(re.findall(r'[A-Za-z]{3,}', t)) >= 2
                 if wordy and re.search(r'[→⇒⟶]|->|=>', t):
                     out.append(f'  ARROW            {t[:60]}')
