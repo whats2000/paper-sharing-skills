@@ -10,7 +10,7 @@
 ![Skills](https://img.shields.io/badge/skills-3-8A63D2)
 ![Python](https://img.shields.io/badge/python-3-3776AB?logo=python&logoColor=white)
 ![python-pptx](https://img.shields.io/badge/python--pptx-helpers-B7472A?logo=microsoftpowerpoint&logoColor=white)
-![Version](https://img.shields.io/badge/release-v0.6.0-success)
+![Version](https://img.shields.io/badge/release-v0.7.0-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 [English](README.md) · **繁體中文**
@@ -34,7 +34,7 @@
 
 - **📁 一篇論文一個資料夾。** `paper-project-setup` 建立結構清楚的專案資料夾（`source/`、`figures/`、`videos/`、`posters/`、`data/`、`screenshots/`），附 README 與 `manifest.json`。
 - **🔗 每個素材都有來源。** 每張圖、每段影片、圖表數據與截圖都記錄在 manifest 中（類型、標題、來源網址、取得方式），簡報圖說可以正確標註出處。
-- **🙋 真的抓不到才請你幫忙。** Claude 會先嘗試直接下載、釋出檔案（GitHub / Hugging Face）與瀏覽器擷取；必須請你幫忙時，會把需求寫清楚到一次就能完成。抓不到的項目記在 `missing` 清單。
+- **🙋 真的抓不到才請你幫忙。** Claude 會先走已知門路：透過 `export.arxiv.org` 取得 arXiv 原始碼包（原始圖檔）、專案頁面本身的 GitHub repo（圖片、影片、圖表數據）、程式與資料 repo；不是論文的主題則用網路搜尋找到原始網頁。最後才用瀏覽器或請你幫忙；必須請你幫忙時，會把需求寫清楚到一次就能完成。抓不到的項目記在 `missing` 清單。
 - **🎯 先定義問題。** 每份簡報都先講清楚論文要解決的問題，再談方法。
 - **🪜 必要時才分步。** 只有需要一步步推理的概念才會用「減法」拆成多頁，不會預設拆頁。
 - **🟥 紅框精準對齊。** 紅框對準圖中確切的區域，並用頁面渲染圖檢查。
@@ -52,7 +52,7 @@
 
 | Skill | 功能 | 版本 |
 | --- | --- | :---: |
-| [`paper-project-setup`](skills/paper-project-setup/SKILL.md) | 為一篇論文或一個主題建立專案資料夾，收集 PDF、圖片、展示影片、圖表數據、截圖並記錄來源：能自動下載就自動（直接下載、釋出檔案、瀏覽器），真的抓不到才請使用者幫忙，並維護每個素材的 manifest 與缺漏清單。 | v0.2.1 |
+| [`paper-project-setup`](skills/paper-project-setup/SKILL.md) | 為一篇論文或一個主題建立專案資料夾，先草擬 storyline 決定每一段需要哪些素材，再收集 PDF、圖片、展示影片、圖表數據、截圖並記錄來源：先走已知門路（透過 `export.arxiv.org` 取 arXiv 原始碼、專案頁面的 GitHub repo、程式與資料 repo；非論文主題用網路搜尋找原始網頁），再用瀏覽器，真的抓不到才請使用者幫忙，並維護每個素材的 manifest 與缺漏清單。 | v0.3.0 |
 | [`paper-discussion-slides`](skills/paper-discussion-slides/SKILL.md) | 製作以觀眾理解為核心的論文討論／讀書會簡報（PPTX 或 Canva）。附參考模板簡報、繪製模板頁首頁尾的 `chrome()`，產生頁面渲染、縮圖總覽與頁尾放大條的檢查工具，以及標出過小字體與句子式文字的文字檢查；並指引如何挑選有意義的投票題目，以及先寫故事、社群分享風格（主線不放公式、口語短講稿、技術細節放備用頁）。 | v0.4.0 |
 | [`talk-event-promo`](skills/talk-event-promo/SKILL.md) | 為即將舉辦的分享做宣傳：1600×640 活動封面（輸入→輸出／前後對照，或用工具本身介面的流程展示），由 `make_cover.py` 繪製並檢查縮圖是否看得清楚，再寫白話標題與兩三句、符合社群格式的活動簡介。 | v0.1.0 |
 
@@ -140,7 +140,7 @@ flowchart LR
   title   = {{paper-sharing-skills: Audience-First Claude Skills for Sharing Research Papers}},
   year    = {2026},
   url     = {https://github.com/whats2000/paper-sharing-skills},
-  version = {0.6.0}
+  version = {0.7.0}
 }
 ```
 

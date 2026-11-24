@@ -10,7 +10,7 @@ Project folder + asset collection with source attribution · audience-first pape
 ![Skills](https://img.shields.io/badge/skills-3-8A63D2)
 ![Python](https://img.shields.io/badge/python-3-3776AB?logo=python&logoColor=white)
 ![python-pptx](https://img.shields.io/badge/python--pptx-helpers-B7472A?logo=microsoftpowerpoint&logoColor=white)
-![Version](https://img.shields.io/badge/release-v0.6.0-success)
+![Version](https://img.shields.io/badge/release-v0.7.0-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 **English** · [繁體中文](README.zh-TW.md)
@@ -34,7 +34,7 @@ Works in **Claude Code**, **claude.ai** and the **Claude desktop app**.
 
 - **📁 One folder per paper.** `paper-project-setup` creates a tidy, self-describing project folder (`source/`, `figures/`, `videos/`, `posters/`, `data/`, `screenshots/`) with a README and a `manifest.json`.
 - **🔗 Every asset sourced.** Each figure, video, chart dataset and screenshot is recorded in the manifest with its type, label, source URL and how it was obtained — so slide captions can credit it correctly.
-- **🙋 Ask only when necessary.** Claude tries direct download, released files (GitHub / Hugging Face) and browser extraction before asking you for anything — and when it must ask, the request is precise enough to finish in one pass. Uncollectable items go into a `missing` list.
+- **🙋 Ask only when necessary.** Claude goes to the known sources first: the arXiv source package via `export.arxiv.org` (original figure files), the project page's own GitHub repo (images, videos, chart data), code / data repos, and for non-paper topics the original pages found by web search; the browser and you come last — and when it must ask, the request is precise enough to finish in one pass. Uncollectable items go into a `missing` list.
 - **🎯 Problem first.** Every deck opens by defining the problem the paper solves, before any method.
 - **🪜 Progressive builds only when needed.** A concept is split into build slides *by subtraction* only when it needs step-by-step reasoning — never by default.
 - **🟥 Precise highlight frames.** Red frames are aligned to the exact region of the figure they point at, verified from page renders.
@@ -52,7 +52,7 @@ Works in **Claude Code**, **claude.ai** and the **Claude desktop app**.
 
 | Skill | What it does | Version |
 | --- | --- | :---: |
-| [`paper-project-setup`](skills/paper-project-setup/SKILL.md) | Sets up a project folder for one paper or topic and collects its media (PDF, figures, demo videos, chart data, screenshots) with source attribution: downloads automatically where possible (direct, released files, browser), asks only for what truly cannot be fetched, and keeps a typed manifest of every asset plus a missing list. | v0.2.1 |
+| [`paper-project-setup`](skills/paper-project-setup/SKILL.md) | Sets up a project folder for one paper or topic, drafts a rough storyline to decide what media each beat needs, and collects that media (PDF, figures, demo videos, chart data, screenshots) with source attribution: goes to known sources first (arXiv source via `export.arxiv.org`, the project page's GitHub repo, code / data repos; original pages by web search for non-paper topics), then the browser, asks only for what truly cannot be fetched, and keeps a typed manifest of every asset plus a missing list. | v0.3.0 |
 | [`paper-discussion-slides`](skills/paper-discussion-slides/SKILL.md) | Designs paper-discussion / journal-club decks (PPTX or Canva) that put audience understanding first. Ships a reference template deck, a `chrome()` helper for template header / footer, a render checker for page renders, thumbnail sheets and footer zoom strips, and a text audit that flags small fonts and sentence-like slide text; guides poll-question choice and a story-first, community-talk style (no formulas in the main story, short spoken notes, backup slides). | v0.4.0 |
 | [`talk-event-promo`](skills/talk-event-promo/SKILL.md) | Makes the promotion for an upcoming talk: a 1600×640 event cover (input→output / before→after comparison, or a process showcase with the tool's own UI) rendered by `make_cover.py` and checked at thumbnail size, plus a plain-language title and a two-to-three-sentence description in the group's format. | v0.1.0 |
 
@@ -198,7 +198,7 @@ If these skills help your talks or research, please cite them:
   title   = {{paper-sharing-skills: Audience-First Claude Skills for Sharing Research Papers}},
   year    = {2026},
   url     = {https://github.com/whats2000/paper-sharing-skills},
-  version = {0.6.0}
+  version = {0.7.0}
 }
 ```
 
