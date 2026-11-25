@@ -492,6 +492,52 @@ def curve_arrow(slide, src, dst, color=CALLRED, width=7):
         _say(f'curve_arrow: no room for a clean curve between {src} and {dst}; move the boxes further apart')
     return _draw_path(slide, pts, color, width)
 
+
+def bottom_line(slide, lines, color=CALLRED, bold=True, align='c', max_size=44, min_size=32, pad=24):
+    """the conclusion or the hand-over question under the content: measured, not guessed.
+
+    Call it LAST inside draw() (or after everything else on a plain slide). It measures the free band
+    between the lowest element on the slide (all build steps, since draw() holds the complete slide)
+    and the bottom of the content area, picks the largest size from max_size down to min_size at which
+    every line fits the width and the band's height, and centres the text vertically in the band.
+    max_size stays below the title (48 pt), so the line stands out over body text without competing
+    with the title. lines: one string, or a list of lines (strings or runs). Returns the elements;
+    in build_steps() give them their own part, appearing on the step where the line is said."""
+    lines = [lines] if isinstance(lines, str) else list(lines)
+    obs = _obstacles(slide)
+    x0, x1, bot = CONTENT['x0'] + pad, CONTENT['x1'] - pad, CONTENT['y1']
+    lh = lambda sz: sz / 0.75 * 1.3
+
+    def place(sz):
+        tw = min(x1 - x0, max(text_width(_flat(l), sz) for l in lines) * 1.06 + 16)   # slack for the width estimate
+        lx = x0 if align == 'l' else x1 - tw if align == 'r' else (x0 + x1) / 2 - tw / 2
+        # only what lies above the line's own span counts: a QR code in a corner does not push it down
+        top = max([o[1] + o[3] for o in obs if o[0] < lx + tw + pad and lx - pad < o[0] + o[2]] + [CONTENT['y0']])
+        return tw, lx, top
+
+    size = None
+    for sz in range(max_size, min_size - 1, -2):
+        tw, lx, top = place(sz)
+        if max(text_width(_flat(l), sz) for l in lines) <= x1 - x0 and lh(sz) * len(lines) <= bot - top - 2 * pad:
+            size = sz
+            break
+    if size is None:
+        size = min_size
+        tw, lx, top = place(size)
+        _say(f'bottom_line: {_flat(lines[0])!r} has only {int(bot - top)} px under the content; shrink the '
+              f'content above, shorten the line, or give the line its own slide')
+    h = lh(size) * len(lines)
+    y = (top + bot) / 2 - h / 2 if bot - top >= h + 2 * pad else max(top + 4, bot - h)
+    els = text(slide, lx, y, tw, h, lines, size=size, color=color, bold=bold, align=align, anchor='m')
+    bottom_line.last = dict(band_top=top, band_bottom=bot, band_middle=(top + bot) / 2,
+                            line_middle=y + h / 2, box=(lx, y, tw, h), size=size)   # for checking the placement
+    for e in els:
+        nv = e.find('.//' + qn('p:cNvPr'))
+        if nv is not None:
+            nv.set('descr', 'bottom_line')
+    return els
+
+
 _SAID = set()
 
 

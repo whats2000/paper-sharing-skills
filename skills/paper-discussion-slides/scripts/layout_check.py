@@ -15,6 +15,8 @@ query real boundaries instead of guessing them. Reports, per slide:
   BEND     a curved arrow that leaves its element or enters its callout at a slant: a curve goes
            straight out of one edge (from its middle) and straight into one edge of the callout,
            e.g. right edge -> top of a callout below-right, or bottom edge -> its left edge
+  BOTTOM   a large (>= 40 pt as stored) red conclusion or hand-over line under the content that is not centred in the free
+           space below the content (too high or too low): draw it with slide_kit.bottom_line()
 --list prints every element with its name, box (x, y, w, h) and first words, for querying.
 Exit status 1 when anything is reported.
 """
@@ -178,11 +180,36 @@ def main():
                         if off(xy[0], xy[2]) > 15 or off(xy[-3], xy[-1]) > 15:
                             out.append(f'  BEND     {e["name"]} is a curve that leaves or enters at a slant: it should go '
                                        f'straight out of one edge of the element and straight into one edge of the callout')
-        rep = [o for o in out if not o.startswith('  ') or o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW', 'CROWD', 'SHORT', 'BLOCK', 'SLANT', 'BEND')]
+        for e in body:                       # a conclusion / hand-over line placed by hand under the content
+            nv = e['el'].find('.//p:cNvPr', NS)
+            if not e['text'] or e['faded'] or (nv.get('descr') or '') in ('bottom_line', 'annotate'):
+                continue
+            if e['el'].find('.//a:rPr/a:solidFill/a:srgbClr[@val="FF5757"]', NS) is None:
+                continue
+            if e['el'].find('./p:spPr/a:solidFill', NS) is not None:
+                continue                         # a callout box, not a line of text
+            szs = [int(r.get('sz')) for r in e['el'].findall('.//a:rPr', NS) if r.get('sz')]
+            if not szs or max(szs) < 4000:
+                continue                         # a caption or label under a figure, not a conclusion line
+            x, y, w, h = e['box']
+            ink = e['el'].findall('.//a:t', NS)
+            above = [o for o in body if o is not e and o['box'][1] + o['box'][3] <= y + 2
+                     and o['box'][0] < x + w and x < o['box'][0] + o['box'][2] and o['box'][2] < W - 4]
+            below = [o for o in body if o is not e and o['box'][1] >= y + h - 2 and o['box'][1] < FOOTER_TOP - 2
+                     and o['box'][0] < x + w and x < o['box'][0] + o['box'][2]]
+            if not above or below or y < 560:
+                continue
+            top = max(o['box'][1] + o['box'][3] for o in above)
+            bot = 1025
+            off = (y + h / 2) - (top + bot) / 2
+            if bot - top > h + 60 and abs(off) > 30:
+                out.append(f'  BOTTOM   "{e["text"][:20]}" sits {int(abs(off))} px {"below" if off > 0 else "above"} the middle '
+                           f'of the free space under the content: draw it with bottom_line()')
+        rep = [o for o in out if not o.startswith('  ') or o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW', 'CROWD', 'SHORT', 'BLOCK', 'SLANT', 'BEND', 'BOTTOM')]
         if out:
             print(f'slide {i}')
             print('\n'.join(out))
-        issues += sum(1 for o in rep if o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW', 'CROWD', 'SHORT', 'BLOCK', 'SLANT', 'BEND'))
+        issues += sum(1 for o in rep if o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW', 'CROWD', 'SHORT', 'BLOCK', 'SLANT', 'BEND', 'BOTTOM'))
     print(f'{issues} issue(s)' if issues else 'no issues')
     sys.exit(1 if issues else 0)
 
