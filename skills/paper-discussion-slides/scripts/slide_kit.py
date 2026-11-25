@@ -170,19 +170,8 @@ def picture(slide, path, x, y, w, h, alt=''):
     return [pic._element], (X, Y, W, H)
 
 
-def arc_arrow(slide, p0, p1, bend=0.35, color=CALLRED, width=10, n=32):
-    """curved red arrow from p0 to p1 (px), arrowhead at p1. bend > 0 bows to the left of the travel direction; ~0 is straight.
-    The thin arrow: over a figure or on a slant (bend ~0 = straight). For a callout, p0 on the element,
-    p1 on the callout; prefer annotate(), which picks thin or block and the colour for you."""
-    (x0, y0), (x1, y1) = p0, p1
-    mx, my = (x0 + x1) / 2, (y0 + y1) / 2
-    dx, dy = x1 - x0, y1 - y0
-    cx, cy = mx - dy * bend, my + dx * bend
-    pts = []
-    for i in range(n + 1):
-        t = i / n
-        pts.append(((1 - t) ** 2 * x0 + 2 * (1 - t) * t * cx + t * t * x1,
-                    (1 - t) ** 2 * y0 + 2 * (1 - t) * t * cy + t * t * y1))
+def _draw_path(slide, pts, color=CALLRED, width=10):
+    """a thin arrow along the points pts (px), arrowhead at the last point."""
     fb = slide.shapes.build_freeform(_px(slide, pts[0][0]), _px(slide, pts[0][1]), scale=1.0)
     fb.add_line_segments([(_px(slide, a), _px(slide, b)) for a, b in pts[1:]], close=False)
     sp = fb.convert_to_shape()
@@ -194,6 +183,34 @@ def arc_arrow(slide, p0, p1, bend=0.35, color=CALLRED, width=10, n=32):
     ln.set('cap', 'rnd')
     ln.append(ln.makeelement(qn('a:tailEnd'), {'type': 'triangle', 'w': 'med', 'len': 'med'}))
     return [sp._element]
+
+
+def _quad(p0, c, p1, n=32):
+    return [((1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * c[0] + t * t * p1[0],
+             (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * c[1] + t * t * p1[1]) for t in (i / n for i in range(n + 1))]
+
+
+def _cubic(p0, c1, c2, p1, n=32):
+    return [((1 - t) ** 3 * p0[0] + 3 * (1 - t) ** 2 * t * c1[0] + 3 * (1 - t) * t * t * c2[0] + t ** 3 * p1[0],
+             (1 - t) ** 3 * p0[1] + 3 * (1 - t) ** 2 * t * c1[1] + 3 * (1 - t) * t * t * c2[1] + t ** 3 * p1[1])
+            for t in (i / n for i in range(n + 1))]
+
+
+def arc_arrow(slide, p0, p1, bend=0.35, color=CALLRED, width=10, n=32):
+    """curved red arrow from p0 to p1 (px), arrowhead at p1. bend > 0 bows to the left of the travel direction; ~0 is straight.
+    The thin arrow: over a figure or on a slant (bend ~0 = straight). For a callout prefer annotate(),
+    or curve_arrow() between two boxes: both make the curve leave one edge straight out and enter the
+    callout straight in, which a symmetric bend from arc_arrow() does not."""
+    (x0, y0), (x1, y1) = p0, p1
+    mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+    dx, dy = x1 - x0, y1 - y0
+    cx, cy = mx - dy * bend, my + dx * bend
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        pts.append(((1 - t) ** 2 * x0 + 2 * (1 - t) * t * cx + t * t * x1,
+                    (1 - t) ** 2 * y0 + 2 * (1 - t) * t * cy + t * t * y1))
+    return _draw_path(slide, pts, color, width)
 
 
 def block_arrow(slide, x, y, w, h, direction='down', fill=ARROWGRAY):
@@ -383,6 +400,98 @@ def _crossing(p0, p1, obs, n=40):
     return L * hit / n
 
 
+
+def _cross_pts(pts, obs):
+    """px of the path through pts that runs over other content."""
+    hit = 0.0
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        seg = ((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5
+        n = max(1, int(seg // 10))
+        for i in range(n):
+            t = (i + 0.5) / n
+            x, y = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
+            if any(o[0] < x < o[0] + o[2] and o[1] < y < o[1] + o[3] for o in obs):
+                hit += seg / n
+    return hit
+
+
+CURVE_MIN = 60      # px a curved arrow needs along each axis to turn cleanly
+
+
+def _routes(target, cbox, m=8):
+    """curved paths from the middle of one target edge to the middle of one callout edge. Each leaves
+    its edge straight out and enters the callout's edge straight in, so the bend is in the middle:
+    'L' turns a quarter (right edge -> top of a callout below-right, bottom edge -> its left edge, ...);
+    'S' keeps its direction (right edge -> left edge of a callout to the right but not lined up).
+    Returns (axis of the exit 'h'/'v', 'L'/'S', points)."""
+    tx, ty, tw, th = target
+    cx, cy, cw, ch = cbox
+    out = []
+    for sx in (1, -1):                                   # out of the right / left edge
+        S = (tx + tw + m if sx > 0 else tx - m, ty + th / 2)
+        for sy in (1, -1):                               # into the top / bottom edge
+            E = (cx + cw / 2, cy - m if sy > 0 else cy + ch + m)
+            if (E[0] - S[0]) * sx >= CURVE_MIN and (E[1] - S[1]) * sy >= CURVE_MIN:
+                out.append(('h', 'L', _quad(S, (E[0], S[1]), E)))
+        E = (cx - m if sx > 0 else cx + cw + m, cy + ch / 2)
+        if (E[0] - S[0]) * sx >= max(CURVE_MIN, 0.8 * abs(E[1] - S[1])):     # a squashed S reads as a kink
+            k = (E[0] - S[0]) / 2
+            out.append(('h', 'S', _cubic(S, (S[0] + k, S[1]), (E[0] - k, E[1]), E)))
+    for sy in (1, -1):                                   # out of the bottom / top edge
+        S = (tx + tw / 2, ty + th + m if sy > 0 else ty - m)
+        for sx in (1, -1):                               # into the left / right edge
+            E = (cx - m if sx > 0 else cx + cw + m, cy + ch / 2)
+            if (E[0] - S[0]) * sx >= CURVE_MIN and (E[1] - S[1]) * sy >= CURVE_MIN:
+                out.append(('v', 'L', _quad(S, (S[0], E[1]), E)))
+        E = (cx + cw / 2, cy - m if sy > 0 else cy + ch + m)
+        if (E[1] - S[1]) * sy >= max(CURVE_MIN, 0.8 * abs(E[0] - S[0])):
+            k = (E[1] - S[1]) / 2
+            out.append(('v', 'S', _cubic(S, (S[0], S[1] + k), (E[0], E[1] - k), E)))
+    return out
+
+
+def _path(target, cbox, side, lined, obs):
+    """the thin arrow's points, how much of it runs over content, and whether it is clean.
+    Lined up: straight between the facing edges. Otherwise the curve from _routes() that crosses the
+    least content (quarter turns before S-bends, then the exit matching `side`, then the shortest);
+    clean=False when none fits, and a plain bend is used (layout_check reports it as BEND)."""
+    if lined:
+        pts = list(_ends(target, cbox, side, True))
+        return pts, _cross_pts(pts, obs), True
+    want = 'h' if side in ('right', 'left') else 'v'
+    best = None
+    for ax, kind, pts in _routes(target, cbox):
+        c = _cross_pts(pts, obs)
+        L = sum(((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5 for a, b in zip(pts, pts[1:]))
+        sc = (round(c / 10), 0 if kind == 'L' else 1, 0 if ax == want else 1, L)
+        if best is None or sc < best[0]:
+            best = (sc, pts, c)
+    if best:
+        return best[1], best[2], True
+    p0, p1 = _ends(target, cbox, side, False)
+    bend = 0.3 if side in ('right', 'above') else -0.3
+    mx, my = (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2
+    pts = _quad(p0, (mx - (p1[1] - p0[1]) * bend, my + (p1[0] - p0[0]) * bend), p1)
+    return pts, _cross_pts(pts, obs), False
+
+
+def curve_arrow(slide, src, dst, color=CALLRED, width=7):
+    """a thin arrow from box src to box dst (px boxes, e.g. a frame and a callout you placed yourself).
+    Straight between the facing edges when their centre lines meet (within 12 px); otherwise a curve
+    that leaves the middle of one src edge straight out and enters one dst edge straight in, the turn
+    in between (right edge -> top or bottom of a box off to the right, bottom edge -> its side, ...).
+    Prefer annotate(), which also places the callout; use this when the layout is fixed by hand."""
+    sx, sy, sw, sh = src
+    dx, dy, dw, dh = dst
+    if abs((sy + sh / 2) - (dy + dh / 2)) <= 12 or abs((sx + sw / 2) - (dx + dw / 2)) <= 12:
+        horiz = abs((sy + sh / 2) - (dy + dh / 2)) <= 12
+        side = ('right' if dx >= sx + sw else 'left') if horiz else ('below' if dy >= sy + sh else 'above')
+        return _draw_path(slide, list(_ends(src, dst, side, True)), color, width)
+    pts, _, clean = _path(src, dst, 'right', False, [])
+    if not clean:
+        _say(f'curve_arrow: no room for a clean curve between {src} and {dst}; move the boxes further apart')
+    return _draw_path(slide, pts, color, width)
+
 _SAID = set()
 
 
@@ -407,7 +516,10 @@ def annotate(slide, target, lines, side='right', style=None, color=None, size=36
     side:   preferred side of the callout: 'right', 'below', 'left' or 'above'.
     style:  'block' = thick solid block arrow, only straight (callout lined up) and only through
             free space, never lying on a picture or chart; 'thin' = a line with an arrowhead,
-            straight when lined up, curved when the callout is pulled out on a slant. A 'block'
+            straight when lined up, curved when the callout is pulled out on a slant: the curve
+            leaves the middle of one edge of the target straight out and enters one edge of the
+            callout straight in (right edge -> top of a callout below-right, bottom edge -> its
+            left edge), so the turn sits between them. A 'block'
             request falls back to 'thin' when no lined-up place with a clear path exists.
     color:  arrow colour, 'grey' (muted grey-blue) or 'red' (muted).
     text_color: the callout text colour: red when the callout is the key point, INK or BLUE for a
@@ -467,13 +579,13 @@ def annotate(slide, target, lines, side='right', style=None, color=None, size=36
                       (min(ty + th, cy + ch) - max(ty, cy))
                 lined = lap >= min(60, (tw if sd in ('below', 'above') else th) - 2)
                 p0, p1 = _ends(target, cb, sd, lined)
-                cross = _crossing(p0, p1, path_obs)
-                block_ok = lined and cross == 0 and _crossing(p0, p1, figs) == 0
-                score = (0 if (style != 'block' or block_ok) else 1, round(cross / 10),
+                block_ok = lined and _crossing(p0, p1, path_obs) == 0 and _crossing(p0, p1, figs) == 0
+                _, cross, clean = _path(target, cb, sd, lined, path_obs)
+                score = (0 if (style != 'block' or block_ok) else 1, 0 if clean else 1, round(cross / 10),
                          0 if sd == side else 1, g, -lap)
                 if best is None or score < best[0]:
                     best = (score, sd, cx, cy, lined, block_ok)
-            if best and best[0][:2] == (0, 0) and extra > 200:
+            if best and best[0][:3] == (0, 0, 0) and extra > 200:
                 break
     if best is None:
         sd = side
@@ -501,8 +613,11 @@ def annotate(slide, target, lines, side='right', style=None, color=None, size=36
         if style == 'block':
             _say(f'annotate: {lines!r}: a block arrow would lie on the figure or run on a slant here, so a thin '
                   f'arrow was drawn; use style=\'thin\' for this whole slide to keep its arrows alike')
-        bend = 0.0 if lined else (0.3 if side in ('right', 'above') else -0.3)
-        els += arc_arrow(slide, p0, p1, bend=bend, color=THIN[color], width=7)
+        pts, _, clean = _path(target, cbox, side, lined, path_obs)
+        if not clean:
+            _say(f'annotate: {lines!r}: no room for a clean curve (straight out of one edge, straight into '
+                  f'the callout); move the callout further out or line it up with what it explains')
+        els += _draw_path(slide, pts, THIN[color], 7)
     els += cel
     for e in els:
         nv = e.find('.//' + qn('p:cNvPr'))

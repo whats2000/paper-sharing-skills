@@ -12,6 +12,9 @@ query real boundaries instead of guessing them. Reports, per slide:
   SHORT    an arrow shorter than 60 px: too short to lead the eye from the figure to the callout
   BLOCK    a thick block arrow lying on a picture or chart: use a thin arrow there
   SLANT    a straight arrow running on a slant: a diagonal pull-out takes a curved arrow
+  BEND     a curved arrow that leaves its element or enters its callout at a slant: a curve goes
+           straight out of one edge (from its middle) and straight into one edge of the callout,
+           e.g. right edge -> top of a callout below-right, or bottom edge -> its left edge
 --list prints every element with its name, box (x, y, w, h) and first words, for querying.
 Exit status 1 when anything is reported.
 """
@@ -161,14 +164,25 @@ def main():
                     xy = [(int(q.get('x')), int(q.get('y'))) for q in pts]
                     (x0, y0), (x1, y1), (xm, ym) = xy[0], xy[-1], xy[len(xy) // 2]
                     L = ((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5 or 1
-                    dev = abs((x1 - x0) * (y0 - ym) - (x0 - xm) * (y1 - y0)) / L
+                    dev = max(abs((x1 - x0) * (y0 - q[1]) - (x0 - q[0]) * (y1 - y0)) for q in xy) / L   # an S-bend crosses its chord mid-way
                     if dev < 0.02 * L and min(abs(x1 - x0), abs(y1 - y0)) > 0.25 * L:
                         out.append(f'  SLANT    {e["name"]} is a straight arrow on a slant')
-        rep = [o for o in out if not o.startswith('  ') or o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW', 'CROWD', 'SHORT', 'BLOCK', 'SLANT')]
+                    elif dev >= 0.02 * L and len(xy) >= 5:
+                        path = e['el'].find('.//a:custGeom//a:path', NS)
+                        sx = w / (int(path.get('w') or 1) or 1)
+                        sy = h / (int(path.get('h') or 1) or 1)
+                        def off(p, q):          # degrees off the nearest axis
+                            import math
+                            a = math.degrees(math.atan2(abs(q[1] - p[1]) * sy, abs(q[0] - p[0]) * sx))
+                            return min(a, 90 - a)
+                        if off(xy[0], xy[2]) > 15 or off(xy[-3], xy[-1]) > 15:
+                            out.append(f'  BEND     {e["name"]} is a curve that leaves or enters at a slant: it should go '
+                                       f'straight out of one edge of the element and straight into one edge of the callout')
+        rep = [o for o in out if not o.startswith('  ') or o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW', 'CROWD', 'SHORT', 'BLOCK', 'SLANT', 'BEND')]
         if out:
             print(f'slide {i}')
             print('\n'.join(out))
-        issues += sum(1 for o in rep if o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW', 'CROWD', 'SHORT', 'BLOCK', 'SLANT'))
+        issues += sum(1 for o in rep if o[2:10].strip() in ('OFF', 'OVERLAP', 'ARROW', 'CROWD', 'SHORT', 'BLOCK', 'SLANT', 'BEND'))
     print(f'{issues} issue(s)' if issues else 'no issues')
     sys.exit(1 if issues else 0)
 

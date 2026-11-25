@@ -61,7 +61,7 @@ Other scripts:
 |---|---|
 | `build_sample_template.py [out.pptx]` | Rebuild `assets/sample-template.pptx`, the reference deck for the template |
 | `render_check.py deck.pptx [out_dir]` | Render pages, a thumbnail sheet, and `footers.png` (every footer at full resolution) |
-| `layout_check.py deck.pptx [--slide N] [--list]` | Real box of every element (`--list`) and layout faults: `OFF` (runs off the slide), `OVERLAP` (text on text), `ARROW` (head lands on no callout), `CROWD` (callout lies on content), `SHORT` (arrow under 60 px), `BLOCK` (block arrow on a figure), `SLANT` (straight arrow on a slant) |
+| `layout_check.py deck.pptx [--slide N] [--list]` | Real box of every element (`--list`) and layout faults: `OFF` (runs off the slide), `OVERLAP` (text on text), `ARROW` (head lands on no callout), `CROWD` (callout lies on content), `SHORT` (arrow under 60 px), `BLOCK` (block arrow on a figure), `SLANT` (straight arrow on a slant), `BEND` (a curve that leaves its element or enters its callout at a slant instead of straight out of one edge and straight into another) |
 | `audit_text.py deck.pptx [--min-size 24] [--caption-size 22] [--max-chars 18]` | List text runs below the size floors (footer excluded) and paragraphs that read as sentences; exit status 1 when anything needs fixing |
 
 Example:

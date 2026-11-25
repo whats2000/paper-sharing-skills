@@ -11,7 +11,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from slide_kit import (new_deck, blank_slide, chrome, text, rect, callout, arc_arrow, frame,
+from slide_kit import (new_deck, blank_slide, chrome, text, rect, callout, callout_size, curve_arrow, frame,
                        block_arrow, dim_area, bullets, block, qr, notes, MUTED, BLUE, GRAYBG)
 
 DECK = 'Short Deck Title'
@@ -45,19 +45,21 @@ def content(prs, step):
     text(s, 72, 820, 1000, 40, 'Fig. N  caption in muted grey; "redrawn from the paper\'s Fig. N data" if redrawn',
          size=20, color=MUTED)
     if step == 1:
-        _, b = callout(s, 1180, 330, ['A question that makes', 'the audience think?'])
-        arc_arrow(s, (1072, 600), (b[0] - 10, b[1] + b[3] / 2), bend=-0.35)
-        notes(s, 'Build step 1 of 2 (same page number as step 2). Curved arrow: this leads to a question.')
+        _, b = callout(s, 1180, 250, ['A question that makes', 'the audience think?'])
+        curve_arrow(s, (72, 240, 1000, 560), b)
+        notes(s, 'Build step 1 of 2 (same page number as step 2). The callout is pulled out on a slant, so the arrow '
+                 'curves: straight out of the figure\'s right edge, straight into the callout\'s bottom edge.')
     else:
         dim_area(s, 72, 240, 1000, 560)   # mask over what step 1 discussed
         f = (300, 420, 360, 220)
         rect(s, f[0], f[1], f[2], f[3], fill='C9D7EA', radius=12)
         frame(s, *f)
-        _, b = callout(s, 1180, 470, ['This part means …'])
-        arc_arrow(s, (f[0] + f[2] + 12, f[1] + f[3] / 2), (b[0] - 10, b[1] + b[3] / 2), bend=0.3)
+        cw, ch = callout_size(['This part means …'])
+        _, b = callout(s, 1180, f[1] + f[3] / 2 - ch / 2, ['This part means …'])
+        curve_arrow(s, f, b)
         notes(s, 'Build step 2 of 2: the previous callout and arrow are gone; the figure is dimmed with dim_area() only '
                  'to show the mask (white, 80% opacity, no outline, no shadow); normally a frame circles part of an '
-                 'image and nothing is dimmed. Every callout arrow is the red curve.')
+                 'image and nothing is dimmed. The callout is lined up with the frame, so the arrow is straight.')
     return s
 
 
