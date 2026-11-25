@@ -54,6 +54,7 @@ Works in **Claude Code**, **claude.ai** and the **Claude desktop app**.
 | --- | --- | :---: |
 | [`paper-project-setup`](skills/paper-project-setup/SKILL.md) | Sets up a project folder for one paper or topic, drafts a rough storyline to decide what media each beat needs, and collects that media (PDF, figures, demo videos, chart data, screenshots) with source attribution: goes to known sources first (arXiv source via `export.arxiv.org`, the project page's GitHub repo, code / data repos; original pages by web search for non-paper topics), then the browser, asks only for what truly cannot be fetched, and keeps a typed manifest of every asset plus a missing list. | v0.3.0 |
 | [`paper-discussion-slides`](skills/paper-discussion-slides/SKILL.md) | Designs paper-discussion / journal-club decks (PPTX or Canva) that put audience understanding first. Ships a reference template deck, a `chrome()` helper for template header / footer, a render checker for page renders, thumbnail sheets and footer zoom strips, and a text audit that flags small fonts and sentence-like slide text; guides poll-question choice and a story-first, community-talk style (no formulas in the main story, short spoken notes, backup slides). | v0.4.0 |
+| [`paper-slides-revision`](skills/paper-slides-revision/SKILL.md) | Revises a finished deck slide by slide without changing its storyline, with the user deciding what changes: renders every build step, runs the layout and text checks, proposes fixes for a list of known problems (slanted curved arrows, unreadable figure text, analogies left as text, tables read cell by cell, crowded last steps, sub-headings and explanation text that belong in the speaker notes, conclusions left small on empty slides, masks and leftover callouts, optional illustrations that show an item's own idea) in the build script, then applies the approved fixes and the user's page-by-page feedback in the build script, showing the rendered deck after every change. | v0.1.0 |
 | [`talk-event-promo`](skills/talk-event-promo/SKILL.md) | Makes the promotion for an upcoming talk: a 1600×640 event cover (input→output / before→after comparison, or a process showcase with the tool's own UI) rendered by `make_cover.py` and checked at thumbnail size, plus a plain-language title and a two-to-three-sentence description in the group's format. | v0.1.0 |
 
 More paper-sharing skills will be added over time.
@@ -161,6 +162,8 @@ check   <dir>                               verify every manifest file exists an
             ├── build_sample_template.py  # rebuilds assets/sample-template.pptx
             ├── render_check.py           # page renders, thumbnail sheet, footer zoom strip
             └── audit_text.py             # small fonts and sentence-like slide text
+    └── paper-slides-revision/
+        └── SKILL.md                 # post-build fixes and user feedback, storyline kept
     └── talk-event-promo/
         ├── SKILL.md                 # cover layout choice, description length, checks
         ├── references/examples.md   # two finished promotions (compare, showcase)
