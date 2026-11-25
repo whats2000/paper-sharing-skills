@@ -29,7 +29,7 @@ EXPECTED_EXT = {
     'screenshot': {'.png', '.jpg', '.jpeg', '.webp'}, 'video': {'.mp4', '.webm', '.mov', '.m4v'},
     'data': {'.json', '.csv', '.tsv', '.js', '.xlsx'},
 }
-OBTAINED = ['direct', 'release', 'browser', 'screenshot', 'user']
+OBTAINED = ('arxiv-source', 'page-repo', 'release', 'direct', 'browser', 'screenshot', 'user')
 
 
 def _manifest(root):
@@ -70,9 +70,27 @@ def init(a):
 - `data/` chart data and tables
 - `screenshots/` screenshots of things with no downloadable original
 - `manifest.json` every asset with its source and how it was obtained
+- `storyline_draft.md` rough storyline: core question, beats, and the asset each beat needs
 
 ## Collected / missing
 (see manifest.json)
+""", encoding='utf-8')
+    story = root / 'storyline_draft.md'
+    if not story.exists():
+        story.write_text(f"""# Storyline draft: {m['title'] or root.name}
+
+Rough plan written before collecting media; `paper-discussion-slides` refines it.
+
+## Core question and core idea
+(two or three spoken sentences: what the audience wonders for the whole talk, and what answers it)
+
+## Beats
+| # | Question the audience arrives with | What they must see or hear | Question they leave with | Asset (kind, which, where) |
+|---|---|---|---|---|
+| 1 | | | | |
+
+## Backup assets
+- (main results table, key ablation, ...)
 """, encoding='utf-8')
     print(f'initialised {root}')
 
@@ -215,8 +233,8 @@ def check(a):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sp = ap.add_subparsers(dest='cmd', required=True)
-    p = sp.add_parser('init'); p.add_argument('dir'); p.add_argument('--title', default=''); p.add_argument('--url', nargs='*'); p.set_defaults(fn=init)
-    p = sp.add_parser('meta'); p.add_argument('dir'); p.add_argument('--title'); p.add_argument('--url', nargs='*')
+    p = sp.add_parser('init'); p.add_argument('dir'); p.add_argument('--title', default=''); p.add_argument('--url', nargs='+', action='extend'); p.set_defaults(fn=init)
+    p = sp.add_parser('meta'); p.add_argument('dir'); p.add_argument('--title'); p.add_argument('--url', nargs='+', action='extend')
     p.add_argument('--source-type', dest='source_type'); p.add_argument('--date'); p.set_defaults(fn=meta)
     p = sp.add_parser('missing'); p.add_argument('dir'); p.add_argument('what'); p.add_argument('--source', default='')
     p.add_argument('--reason', required=True); p.set_defaults(fn=missing)

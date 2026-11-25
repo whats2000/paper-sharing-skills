@@ -17,8 +17,9 @@ This is the built-in default template: with no user template, use `new_deck()` a
 - **Colours:**
   - accent `#3333B2`, second accent `#C83C3C`, secondary text `#5F5F6E`
   - blocks: title bar `#4747BA`, body `#EBEBF7` (a tint of the main colour)
-  - callout text about `#FF5757` on a light grey box with a thin blue border (`#99BDD9`)
-  - block arrows light grey-blue (about `#C8D0DA`)
+  - callouts: a light grey box with a thin blue border (`#99BDD9`); text red (about `#FF5757`) when the callout is the key point, otherwise dark with only its key word red
+  - emphasis: key words and numbers anywhere on the slide (bullets, labels, cells) in the same red, one or two per slide
+  - arrows muted: grey-blue (about `#C8D0DA` block, `#8FA3B8` thin) or the callout red (about `#FF5757`); thick block arrows only through free space, thin arrows over figures or on a slant
 - **Fonts:** Latin Arial; CJK Microsoft JhengHei / Noto Sans CJK TC.
 - **Corners:** boxes may have rounded corners.
 

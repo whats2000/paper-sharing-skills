@@ -8,8 +8,8 @@
     {
       "name": "paper-sharing-skills",
       "source": "./",
-      "description": "Skills for sharing research papers: project setup and asset collection, paper discussion slide design, and talk event promotion.",
-      "version": "0.5.0"
+      "description": "Skills for sharing research papers: project setup and asset collection, paper discussion slide design, slide revision, and talk event promotion.",
+      "version": "0.7.2"
     }
   ]
 }

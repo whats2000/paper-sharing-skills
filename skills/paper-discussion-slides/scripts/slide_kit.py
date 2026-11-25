@@ -106,17 +106,25 @@ def text_width(t, size):
     return sum(em * (0.56 if ord(c) < 0x2E80 else 1.0) for c in t)
 
 
+def _flat(line):
+    """plain text of a line given as a string or as [(text, style), ...] runs."""
+    return line if isinstance(line, str) else ''.join(t for t, _ in line)
+
+
 def callout_size(lines, size=36, w=None):
     """(w, h) the callout box will have, so it can be positioned before it is drawn."""
     lh = size / 0.75 * 1.3
     padx, pady = 40, 26
     if w is None:
-        w = max(text_width(l, size) for l in lines) + 2 * padx
+        w = max(text_width(_flat(l), size) for l in lines) + 2 * padx
     return w, lh * len(lines) + 2 * pady
 
 
-def callout(slide, x, y, lines, size=36, w=None, align='c', anchor=None, valign='t'):
-    """red bold callout whose box fits its text.
+def callout(slide, x, y, lines, size=36, w=None, align='c', anchor=None, valign='t', color=CALLRED):
+    """bold callout whose box fits its text.
+    color: red (default) when the callout IS the key point; INK or BLUE for a supporting remark,
+    with only its key word in red: give such a line as runs, e.g. [('only ', {}), ('19.8%', {'color': CALLRED})].
+    Red marks key points wherever they are; a slide with everything red has no key point.
     anchor: None / 'l' -> x is the left edge, 'r' -> x is the right edge, 'c' -> x is the centre.
     valign: 't' -> y is the top edge, 'm' -> y is the vertical centre, 'b' -> y is the bottom edge.
     returns (elements, (x, y, w, h))."""
@@ -131,7 +139,7 @@ def callout(slide, x, y, lines, size=36, w=None, align='c', anchor=None, valign=
     elif valign == 'b':
         y -= h
     els = rect(slide, x, y, w, h, fill=GRAYBG, line=CALLLINE, line_w=1.5, radius=16)
-    els += text(slide, x + padx * 0.5, y, w - padx, h, lines, size=size, color=CALLRED, bold=True, align=align, anchor='m')
+    els += text(slide, x + padx * 0.5, y, w - padx, h, lines, size=size, color=color, bold=True, align=align, anchor='m')
     return els, (x, y, w, h)
 
 
@@ -162,17 +170,8 @@ def picture(slide, path, x, y, w, h, alt=''):
     return [pic._element], (X, Y, W, H)
 
 
-def arc_arrow(slide, p0, p1, bend=0.35, color=CALLRED, width=10, n=32):
-    """curved red arrow from p0 to p1 (px). bend > 0 bows to the left of the travel direction; ~0 is straight."""
-    (x0, y0), (x1, y1) = p0, p1
-    mx, my = (x0 + x1) / 2, (y0 + y1) / 2
-    dx, dy = x1 - x0, y1 - y0
-    cx, cy = mx - dy * bend, my + dx * bend
-    pts = []
-    for i in range(n + 1):
-        t = i / n
-        pts.append(((1 - t) ** 2 * x0 + 2 * (1 - t) * t * cx + t * t * x1,
-                    (1 - t) ** 2 * y0 + 2 * (1 - t) * t * cy + t * t * y1))
+def _draw_path(slide, pts, color=CALLRED, width=10):
+    """a thin arrow along the points pts (px), arrowhead at the last point."""
     fb = slide.shapes.build_freeform(_px(slide, pts[0][0]), _px(slide, pts[0][1]), scale=1.0)
     fb.add_line_segments([(_px(slide, a), _px(slide, b)) for a, b in pts[1:]], close=False)
     sp = fb.convert_to_shape()
@@ -186,8 +185,38 @@ def arc_arrow(slide, p0, p1, bend=0.35, color=CALLRED, width=10, n=32):
     return [sp._element]
 
 
+def _quad(p0, c, p1, n=32):
+    return [((1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * c[0] + t * t * p1[0],
+             (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * c[1] + t * t * p1[1]) for t in (i / n for i in range(n + 1))]
+
+
+def _cubic(p0, c1, c2, p1, n=32):
+    return [((1 - t) ** 3 * p0[0] + 3 * (1 - t) ** 2 * t * c1[0] + 3 * (1 - t) * t * t * c2[0] + t ** 3 * p1[0],
+             (1 - t) ** 3 * p0[1] + 3 * (1 - t) ** 2 * t * c1[1] + 3 * (1 - t) * t * t * c2[1] + t ** 3 * p1[1])
+            for t in (i / n for i in range(n + 1))]
+
+
+def arc_arrow(slide, p0, p1, bend=0.35, color=CALLRED, width=10, n=32):
+    """curved red arrow from p0 to p1 (px), arrowhead at p1. bend > 0 bows to the left of the travel direction; ~0 is straight.
+    The thin arrow: over a figure or on a slant (bend ~0 = straight). For a callout prefer annotate(),
+    or curve_arrow() between two boxes: both make the curve leave one edge straight out and enter the
+    callout straight in, which a symmetric bend from arc_arrow() does not."""
+    (x0, y0), (x1, y1) = p0, p1
+    mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+    dx, dy = x1 - x0, y1 - y0
+    cx, cy = mx - dy * bend, my + dx * bend
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        pts.append(((1 - t) ** 2 * x0 + 2 * (1 - t) * t * cx + t * t * x1,
+                    (1 - t) ** 2 * y0 + 2 * (1 - t) * t * cy + t * t * y1))
+    return _draw_path(slide, pts, color, width)
+
+
 def block_arrow(slide, x, y, w, h, direction='down', fill=ARROWGRAY):
-    """solid block arrow for a direct 'this → so' link."""
+    """thick solid block arrow: straight, and only through free space, never lying on a picture or chart
+    (use a thin arc_arrow there). For flow between pieces of content, or a lined-up callout (annotate()).
+    direction names where the head points."""
     shp = {'down': MSO_SHAPE.DOWN_ARROW, 'right': MSO_SHAPE.RIGHT_ARROW,
            'left': MSO_SHAPE.LEFT_ARROW, 'up': MSO_SHAPE.UP_ARROW}[direction]
     sp = slide.shapes.add_shape(shp, _px(slide, x), _px(slide, y), _px(slide, w), _px(slide, h))
@@ -212,6 +241,14 @@ def dim(elements, amt=30000):
     return elements
 
 
+def _plain(el):
+    """drop the shape's theme style reference, so no renderer adds a theme shadow or outline
+    (a shadow under a semi-transparent white mask shows through as a grey box)."""
+    st = el.find(qn('p:style'))
+    if st is not None:
+        el.remove(st)
+
+
 def dim_area(slide, x, y, w, h, fill='FFFFFF', opacity=80000):
     """fade a region that was ALREADY discussed: a white mask over it (default for dimming).
 
@@ -223,10 +260,11 @@ def dim_area(slide, x, y, w, h, fill='FFFFFF', opacity=80000):
     els = rect(slide, x, y, w, h, fill=fill, radius=0)
     for c in els[0].iter(qn('a:srgbClr')):
         c.append(c.makeelement(qn('a:alpha'), {'val': str(opacity)}))
+    _plain(els[0])
     return els
 
 
-def hide(slide, x, y, w, h, fill='FFFFFF', opacity=92000):
+def hide(slide, x, y, w, h, fill='FFFFFF', opacity=100000):
     """cover a part of an image that has NOT been explained yet (build by subtraction on a single image).
 
     This is the opposite of `dim`: `dim` fades what was already discussed, `hide` covers what is
@@ -235,6 +273,8 @@ def hide(slide, x, y, w, h, fill='FFFFFF', opacity=92000):
     els = rect(slide, x, y, w, h, fill=fill, radius=0)
     for c in els[0].iter(qn('a:srgbClr')):
         c.append(c.makeelement(qn('a:alpha'), {'val': str(opacity)}))
+    _plain(els[0])
+    els[0].find('.//' + qn('p:cNvPr')).set('descr', 'hide')
     return els
 
 
@@ -271,6 +311,494 @@ def hbars(slide, x, y, rows, label_w=560, bar_w=760, vmax=100, vmin=0, bar_h=60,
             text(slide, vx, yy, tw + 20, bar_h, vt, size=size + 2, bold=True, anchor='m')
             edge = vx + tw
         out[lab] = (left, yy, bw, bar_h, edge)
+    return out
+
+
+def box_of(el, slide=None):
+    """(x, y, w, h) in px of one shape element (sp, pic, cxnSp, graphicFrame or group), or None."""
+    xf = el.find('.//' + qn('a:xfrm'))
+    if xf is None:
+        xf = el.find('.//' + qn('p:xfrm'))
+    if xf is None:
+        return None
+    off, ext = xf.find(qn('a:off')), xf.find(qn('a:ext'))
+    if off is None or ext is None:
+        return None
+    k = 9525.0 if slide is None else _scale(slide)
+    return (int(off.get('x')) / k, int(off.get('y')) / k, int(ext.get('cx')) / k, int(ext.get('cy')) / k)
+
+
+def bbox(elements, slide=None, pad=0):
+    """union (x, y, w, h) in px of several shape elements, grown by `pad` on every side."""
+    bs = [b for b in (box_of(e, slide) for e in elements if e is not None) if b]
+    if not bs:
+        return None
+    x0 = min(b[0] for b in bs) - pad
+    y0 = min(b[1] for b in bs) - pad
+    x1 = max(b[0] + b[2] for b in bs) + pad
+    y1 = max(b[1] + b[3] for b in bs) + pad
+    return (x0, y0, x1 - x0, y1 - y0)
+
+
+CONTENT = dict(x0=48, y0=215, x1=1872, y1=1025)   # area below the title and above the footer
+
+
+def _covers(slide):
+    """boxes of hide() covers: what lies under them is hidden, so a callout may sit there."""
+    out = []
+    for e in slide.shapes._spTree.iterchildren():
+        nv = e.find('.//' + qn('p:cNvPr'))
+        if nv is not None and nv.get('descr') == 'hide':
+            b = box_of(e, slide)
+            if b:
+                out.append(b)
+    return out
+
+
+def _obstacles(slide, skip=()):
+    """boxes of everything already on the slide's content area (header, title and footer excluded)."""
+    out = []
+    for e in slide.shapes._spTree.iterchildren():
+        nv = e.find('.//' + qn('p:cNvPr'))
+        if nv is not None and nv.get('descr') == 'hide':
+            continue
+        if e.tag not in (qn('p:sp'), qn('p:pic'), qn('p:cxnSp'), qn('p:grpSp'), qn('p:graphicFrame')):
+            continue
+        if id(e) in skip:
+            continue
+        b = box_of(e, slide)
+        if not b or b[1] + b[3] <= CONTENT['y0'] or b[1] >= CONTENT['y1'] or b[2] >= 1900:
+            continue
+        out.append(b)
+    return out
+
+
+def _hits(b, obs, clear, covers=()):
+    x, y, w, h = b
+    for c in covers:                             # inside a hide() cover: nothing visible underneath
+        if c[0] <= x and c[1] <= y and x + w <= c[0] + c[2] and y + h <= c[1] + c[3]:
+            return False
+    for o in obs:
+        if x - clear < o[0] + o[2] and o[0] < x + w + clear and y - clear < o[1] + o[3] and o[1] < y + h + clear:
+            return True
+    return False
+
+
+ARROW_MIN = 90      # px of visible arrow between the target and its callout
+
+
+def _crossing(p0, p1, obs, n=40):
+    """px of the straight path p0 -> p1 that runs over other content."""
+    (x0, y0), (x1, y1) = p0, p1
+    L = ((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5
+    hit = 0
+    for i in range(1, n):
+        t = i / n
+        x, y = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
+        if any(o[0] < x < o[0] + o[2] and o[1] < y < o[1] + o[3] for o in obs):
+            hit += 1
+    return L * hit / n
+
+
+
+def _cross_pts(pts, obs):
+    """px of the path through pts that runs over other content."""
+    hit = 0.0
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        seg = ((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5
+        n = max(1, int(seg // 10))
+        for i in range(n):
+            t = (i + 0.5) / n
+            x, y = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
+            if any(o[0] < x < o[0] + o[2] and o[1] < y < o[1] + o[3] for o in obs):
+                hit += seg / n
+    return hit
+
+
+CURVE_MIN = 60      # px a curved arrow needs along each axis to turn cleanly
+
+
+def _routes(target, cbox, m=8):
+    """curved paths from the middle of one target edge to the middle of one callout edge. Each leaves
+    its edge straight out and enters the callout's edge straight in, so the bend is in the middle:
+    'L' turns a quarter (right edge -> top of a callout below-right, bottom edge -> its left edge, ...);
+    'S' keeps its direction (right edge -> left edge of a callout to the right but not lined up).
+    Returns (axis of the exit 'h'/'v', 'L'/'S', points)."""
+    tx, ty, tw, th = target
+    cx, cy, cw, ch = cbox
+    out = []
+    for sx in (1, -1):                                   # out of the right / left edge
+        S = (tx + tw + m if sx > 0 else tx - m, ty + th / 2)
+        for sy in (1, -1):                               # into the top / bottom edge
+            E = (cx + cw / 2, cy - m if sy > 0 else cy + ch + m)
+            if (E[0] - S[0]) * sx >= CURVE_MIN and (E[1] - S[1]) * sy >= CURVE_MIN:
+                out.append(('h', 'L', _quad(S, (E[0], S[1]), E)))
+        E = (cx - m if sx > 0 else cx + cw + m, cy + ch / 2)
+        if (E[0] - S[0]) * sx >= max(CURVE_MIN, 0.8 * abs(E[1] - S[1])):     # a squashed S reads as a kink
+            k = (E[0] - S[0]) / 2
+            out.append(('h', 'S', _cubic(S, (S[0] + k, S[1]), (E[0] - k, E[1]), E)))
+    for sy in (1, -1):                                   # out of the bottom / top edge
+        S = (tx + tw / 2, ty + th + m if sy > 0 else ty - m)
+        for sx in (1, -1):                               # into the left / right edge
+            E = (cx - m if sx > 0 else cx + cw + m, cy + ch / 2)
+            if (E[0] - S[0]) * sx >= CURVE_MIN and (E[1] - S[1]) * sy >= CURVE_MIN:
+                out.append(('v', 'L', _quad(S, (S[0], E[1]), E)))
+        E = (cx + cw / 2, cy - m if sy > 0 else cy + ch + m)
+        if (E[1] - S[1]) * sy >= max(CURVE_MIN, 0.8 * abs(E[0] - S[0])):
+            k = (E[1] - S[1]) / 2
+            out.append(('v', 'S', _cubic(S, (S[0], S[1] + k), (E[0], E[1] - k), E)))
+    return out
+
+
+def _path(target, cbox, side, lined, obs):
+    """the thin arrow's points, how much of it runs over content, and whether it is clean.
+    Lined up: straight between the facing edges. Otherwise the curve from _routes() that crosses the
+    least content (quarter turns before S-bends, then the exit matching `side`, then the shortest);
+    clean=False when none fits, and a plain bend is used (layout_check reports it as BEND)."""
+    if lined:
+        pts = list(_ends(target, cbox, side, True))
+        return pts, _cross_pts(pts, obs), True
+    want = 'h' if side in ('right', 'left') else 'v'
+    best = None
+    for ax, kind, pts in _routes(target, cbox):
+        c = _cross_pts(pts, obs)
+        L = sum(((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5 for a, b in zip(pts, pts[1:]))
+        sc = (round(c / 10), 0 if kind == 'L' else 1, 0 if ax == want else 1, L)
+        if best is None or sc < best[0]:
+            best = (sc, pts, c)
+    if best:
+        return best[1], best[2], True
+    p0, p1 = _ends(target, cbox, side, False)
+    bend = 0.3 if side in ('right', 'above') else -0.3
+    mx, my = (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2
+    pts = _quad(p0, (mx - (p1[1] - p0[1]) * bend, my + (p1[0] - p0[0]) * bend), p1)
+    return pts, _cross_pts(pts, obs), False
+
+
+def curve_arrow(slide, src, dst, color=CALLRED, width=7):
+    """a thin arrow from box src to box dst (px boxes, e.g. a frame and a callout you placed yourself).
+    Straight between the facing edges when their centre lines meet (within 12 px); otherwise a curve
+    that leaves the middle of one src edge straight out and enters one dst edge straight in, the turn
+    in between (right edge -> top or bottom of a box off to the right, bottom edge -> its side, ...).
+    Prefer annotate(), which also places the callout; use this when the layout is fixed by hand."""
+    sx, sy, sw, sh = src
+    dx, dy, dw, dh = dst
+    if abs((sy + sh / 2) - (dy + dh / 2)) <= 12 or abs((sx + sw / 2) - (dx + dw / 2)) <= 12:
+        horiz = abs((sy + sh / 2) - (dy + dh / 2)) <= 12
+        side = ('right' if dx >= sx + sw else 'left') if horiz else ('below' if dy >= sy + sh else 'above')
+        return _draw_path(slide, list(_ends(src, dst, side, True)), color, width)
+    pts, _, clean = _path(src, dst, 'right', False, [])
+    if not clean:
+        _say(f'curve_arrow: no room for a clean curve between {src} and {dst}; move the boxes further apart')
+    return _draw_path(slide, pts, color, width)
+
+
+def bottom_line(slide, lines, color=CALLRED, bold=True, align='c', max_size=44, min_size=32, pad=24):
+    """the conclusion or the hand-over question under the content: measured, not guessed.
+
+    Call it LAST inside draw() (or after everything else on a plain slide). It measures the free band
+    between the lowest element on the slide (all build steps, since draw() holds the complete slide)
+    and the bottom of the content area, picks the largest size from max_size down to min_size at which
+    every line fits the width and the band's height, and centres the text vertically in the band.
+    max_size stays below the title (48 pt), so the line stands out over body text without competing
+    with the title. lines: one string, or a list of lines (strings or runs). Returns the elements;
+    in build_steps() give them their own part, appearing on the step where the line is said."""
+    lines = [lines] if isinstance(lines, str) else list(lines)
+    obs = _obstacles(slide)
+    x0, x1, bot = CONTENT['x0'] + pad, CONTENT['x1'] - pad, CONTENT['y1']
+    lh = lambda sz: sz / 0.75 * 1.3
+
+    def place(sz):
+        tw = min(x1 - x0, max(text_width(_flat(l), sz) for l in lines) * 1.06 + 16)   # slack for the width estimate
+        lx = x0 if align == 'l' else x1 - tw if align == 'r' else (x0 + x1) / 2 - tw / 2
+        # only what lies above the line's own span counts: a QR code in a corner does not push it down
+        top = max([o[1] + o[3] for o in obs if o[0] < lx + tw + pad and lx - pad < o[0] + o[2]] + [CONTENT['y0']])
+        return tw, lx, top
+
+    size = None
+    for sz in range(max_size, min_size - 1, -2):
+        tw, lx, top = place(sz)
+        if max(text_width(_flat(l), sz) for l in lines) <= x1 - x0 and lh(sz) * len(lines) <= bot - top - 2 * pad:
+            size = sz
+            break
+    if size is None:
+        size = min_size
+        tw, lx, top = place(size)
+        _say(f'bottom_line: {_flat(lines[0])!r} has only {int(bot - top)} px under the content; shrink the '
+              f'content above, shorten the line, or give the line its own slide')
+    h = lh(size) * len(lines)
+    y = (top + bot) / 2 - h / 2 if bot - top >= h + 2 * pad else max(top + 4, bot - h)
+    els = text(slide, lx, y, tw, h, lines, size=size, color=color, bold=bold, align=align, anchor='m')
+    bottom_line.last = dict(band_top=top, band_bottom=bot, band_middle=(top + bot) / 2,
+                            line_middle=y + h / 2, box=(lx, y, tw, h), size=size)   # for checking the placement
+    for e in els:
+        nv = e.find('.//' + qn('p:cNvPr'))
+        if nv is not None:
+            nv.set('descr', 'bottom_line')
+    return els
+
+
+_SAID = set()
+
+
+def _say(msg):
+    """print a layout note once (build_steps redraws a slide once per step)."""
+    if msg not in _SAID:
+        _SAID.add(msg)
+        print(msg)
+
+
+THIN = {'grey': '8FA3B8', 'red': CALLRED}       # thin arrow colours (muted)
+BLOCK = {'grey': ARROWGRAY, 'red': 'F3A6A6'}    # block arrow fills (muted)
+_ARROW = {}                                     # slide or build -> (style, colour) fixed by its first callout
+
+
+def annotate(slide, target, lines, side='right', style=None, color=None, size=36, frame_target=False,
+             min_arrow=ARROW_MIN, clear=24, gap=None, outside=None, kind=None, text_color=CALLRED):
+    """explain one thing with a callout: target -> arrow -> callout, drawn as ONE computed unit.
+
+    target: (x, y, w, h) px of what is being explained (a bar, a point, part of a figure), taken
+            from what picture(), hbars(), sub() or box_of() return, never estimated.
+    side:   preferred side of the callout: 'right', 'below', 'left' or 'above'.
+    style:  'block' = thick solid block arrow, only straight (callout lined up) and only through
+            free space, never lying on a picture or chart; 'thin' = a line with an arrowhead,
+            straight when lined up, curved when the callout is pulled out on a slant: the curve
+            leaves the middle of one edge of the target straight out and enters one edge of the
+            callout straight in (right edge -> top of a callout below-right, bottom edge -> its
+            left edge), so the turn sits between them. A 'block'
+            request falls back to 'thin' when no lined-up place with a clear path exists.
+    color:  arrow colour, 'grey' (muted grey-blue) or 'red' (muted).
+    text_color: the callout text colour: red when the callout is the key point, INK or BLUE for a
+            supporting remark (then mark only its key word red with runs; see callout()).
+    The first callout on a slide (or in one build_steps() slide) fixes style and colour; later
+    calls keep them (a note is printed if they asked for something else), so the audience never
+    sees the arrow change between steps. Leave style and color unset after the first call.
+    Placement: the callout touches no other content (pictures, charts, text, shapes) with `clear`
+    px around it (areas hidden with hide() count as free), at least `min_arrow` px from the target.
+    Among free places: one that suits the style first, then the least arrow over other content,
+    the preferred side, the nearest. When no free place exists, a warning is printed: shrink the
+    figure, shorten the callout or move content.
+    frame_target=True also draws a red frame around the target.
+    gap / outside / kind: kept for older calls (a wanted distance; a box to avoid; 'therefore' =
+    block grey, 'discuss' = thin red).
+    Returns (elements, callout_box); give the elements to build_steps() as one part with box
+    'remove', so frame, arrow and callout appear together and leave together."""
+    if kind and not style:
+        style, color = ('block', color or 'grey') if kind == 'therefore' else ('thin', color or 'red')
+    key = _ARROW.get('build') or id(slide._element)
+    fixed = _ARROW.get(key)
+    want = (style or (fixed[0] if fixed else 'block'), color or (fixed[1] if fixed else 'grey'))
+    if fixed and want != fixed:
+        _say(f'annotate: {lines!r} asked for a {want[1]} {want[0]} arrow, but this slide uses {fixed[1]} '
+              f'{fixed[0]}; kept {fixed[1]} {fixed[0]} (one arrow style per slide and its steps)')
+        want = fixed
+    style, color = want
+    if gap is not None:
+        min_arrow = max(min_arrow, gap)
+    tx, ty, tw, th = target
+    cw, ch = callout_size(lines, size)
+    C = CONTENT
+    covs = _covers(slide)
+    inside_t = lambda o: o[0] >= tx - 2 and o[1] >= ty - 2 and o[0] + o[2] <= tx + tw + 2 and o[1] + o[3] <= ty + th + 2
+    obs = [o for o in ([outside] if outside else []) + _obstacles(slide) if not inside_t(o)]
+    holds = lambda o: o[0] <= tx and o[1] <= ty and o[0] + o[2] >= tx + tw and o[1] + o[3] >= ty + th
+    path_obs = [o for o in obs if not holds(o)]
+    figs = [o for o in obs if holds(o)]            # the picture or chart the target sits in
+    gap0 = max(min_arrow, 150 if style == 'thin' else min_arrow) + 16
+    best = None
+    for sd in ('right', 'below', 'left', 'above'):
+        for extra in range(0, 1000, 20):
+            g = gap0 + extra
+            if sd in ('below', 'above'):
+                y = ty + th + g if sd == 'below' else ty - g - ch
+                cands = [(tx + tw / 2 - cw / 2 + d, y) for d in range(-400, 401, 40)]
+            else:
+                x = tx + tw + g if sd == 'right' else tx - g - cw
+                cands = [(x, ty + th / 2 - ch / 2 + d) for d in range(-300, 301, 20)]
+            for cx, cy in cands:
+                if cx < C['x0'] or cy < C['y0'] or cx + cw > C['x1'] or cy + ch > C['y1']:
+                    continue
+                if _hits((cx, cy, cw, ch), obs, clear, covs):
+                    continue
+                cb = (cx, cy, cw, ch)
+                lap = (min(tx + tw, cx + cw) - max(tx, cx)) if sd in ('below', 'above') else \
+                      (min(ty + th, cy + ch) - max(ty, cy))
+                lined = lap >= min(60, (tw if sd in ('below', 'above') else th) - 2)
+                p0, p1 = _ends(target, cb, sd, lined)
+                block_ok = lined and _crossing(p0, p1, path_obs) == 0 and _crossing(p0, p1, figs) == 0
+                _, cross, clean = _path(target, cb, sd, lined, path_obs)
+                score = (0 if (style != 'block' or block_ok) else 1, 0 if clean else 1, round(cross / 10),
+                         0 if sd == side else 1, g, -lap)
+                if best is None or score < best[0]:
+                    best = (score, sd, cx, cy, lined, block_ok)
+            if best and best[0][:3] == (0, 0, 0) and extra > 200:
+                break
+    if best is None:
+        sd = side
+        cx = tx + tw + gap0 if sd == 'right' else tx - gap0 - cw if sd == 'left' else tx + tw / 2 - cw / 2
+        cy = ty + th + gap0 if sd == 'below' else ty - gap0 - ch if sd == 'above' else ty + th / 2 - ch / 2
+        cx = max(C['x0'], min(cx, C['x1'] - cw))
+        cy = max(C['y0'], min(cy, C['y1'] - ch))
+        _say(f'annotate: no free place for callout {lines!r}; shrink the figure, shorten the callout or move content')
+        best = (None, sd, cx, cy, False, False)
+    _, side, cx, cy, lined, block_ok = best
+    if not fixed:
+        _ARROW[key] = (style, color)
+    els = []
+    if frame_target:
+        els += frame(slide, *target)
+    cel, cbox = callout(slide, cx, cy, lines, size=size, color=text_color)
+    p0, p1 = _ends(target, cbox, side, lined)
+    if style == 'block' and block_ok:
+        d = {'right': 'right', 'left': 'left', 'below': 'down', 'above': 'up'}[side]
+        if side in ('right', 'left'):
+            els += block_arrow(slide, min(p0[0], p1[0]), p0[1] - 30, abs(p1[0] - p0[0]), 60, d, fill=BLOCK[color])
+        else:
+            els += block_arrow(slide, p0[0] - 30, min(p0[1], p1[1]), 60, abs(p1[1] - p0[1]), d, fill=BLOCK[color])
+    else:
+        if style == 'block':
+            _say(f'annotate: {lines!r}: a block arrow would lie on the figure or run on a slant here, so a thin '
+                  f'arrow was drawn; use style=\'thin\' for this whole slide to keep its arrows alike')
+        pts, _, clean = _path(target, cbox, side, lined, path_obs)
+        if not clean:
+            _say(f'annotate: {lines!r}: no room for a clean curve (straight out of one edge, straight into '
+                  f'the callout); move the callout further out or line it up with what it explains')
+        els += _draw_path(slide, pts, THIN[color], 7)
+    els += cel
+    for e in els:
+        nv = e.find('.//' + qn('p:cNvPr'))
+        if nv is not None:
+            nv.set('descr', 'annotate')
+    return els, cbox
+
+
+def _ends(target, cbox, side, lined, m=8):
+    """arrow start (on the target's edge) and end (on the callout's facing edge); a lined-up callout
+    gets a straight path through the middle of the overlap."""
+    tx, ty, tw, th = target
+    cx, cy, cw, ch = cbox
+    if side in ('below', 'above'):
+        lo, hi = max(tx, cx), min(tx + tw, cx + cw)
+        ax = (lo + hi) / 2 if (lined and hi > lo) else None
+        y0, y1 = (ty + th + m, cy - m) if side == 'below' else (ty - m, cy + ch + m)
+        return ((ax if ax is not None else tx + tw / 2), y0), ((ax if ax is not None else cx + cw / 2), y1)
+    lo, hi = max(ty, cy), min(ty + th, cy + ch)
+    ay = (lo + hi) / 2 if (lined and hi > lo) else None
+    x0, x1 = (tx + tw + m, cx - m) if side == 'right' else (tx - m, cx + cw + m)
+    return (x0, (ay if ay is not None else ty + th / 2)), (x1, (ay if ay is not None else cy + ch / 2))
+
+
+def _outline_only(el):
+    """True for a shape drawn only by its outline (a red frame, a curved arrow): fade it, do not mask it."""
+    sp = el.find(qn('p:spPr'))
+    if sp is None or el.tag != qn('p:sp'):
+        return False
+    return sp.find(qn('a:solidFill')) is None and el.find('.//' + qn('a:t')) is None
+
+
+def build_steps(prs, draw, steps, scripts=None):
+    """Make the build steps of one slide the way a designer does by hand: build the complete slide,
+    copy it once per step, delete from each copy what has not been said yet, and lay a mask over
+    what was already discussed so the eye goes to the current part.
+
+    draw(slide) draws the COMPLETE slide (call chrome() inside it, with the same page for every
+    step) and returns a list of parts, each a tuple (elements, box, appear, focus_end):
+      elements   the XML elements a drawing function returned (callout, picture, text, arrow, ...);
+      box        what happens once the part is no longer the focus:
+                 'remove' for annotations: a callout with its arrow and frame (what annotate()
+                 returns) leaves with its step; it does not stay on later steps, faded or not;
+                 'auto' for content already discussed (a picture, a list item, a block): each
+                 filled element gets its own tight mask so it stays readable but quiet, and
+                 outline-only elements fade in place; or an explicit (x, y, w, h) in px; or None to never
+                 mask the part. Put a frame, its arrow and its callout in ONE part (annotate()
+                 returns them together) so they fade together;
+      appear     the first step (1-based) on which the part is shown;
+      focus_end  the last step on which the part is the focus; on later steps a dim_area() mask
+                 covers its box. None = never dimmed.
+    Anything draw() creates that is not in a part is shown on every step.
+    scripts: optional list of speaker scripts, one per step.
+    Masks never cover what is current: after the masks are drawn, the parts that are still the
+    focus are moved back on top. A warning is printed when a mask would cut through an element
+    that is not being faded, so check those steps.
+    Returns the list of step slides. Because every step is its own slide, the build survives
+    export to PDF and handouts."""
+    out = []
+    _ARROW['build'] = f'build{len(prs.slides._sldIdLst)}'   # one arrow style for all steps of this slide
+    _ARROW.pop(_ARROW['build'], None)
+    for k in range(1, steps + 1):
+        s = blank_slide(prs)
+        parts = draw(s) or []
+        masks, faded, live = [], set(), []
+        for els, box, appear, focus_end in parts:
+            gone = box == 'remove' and focus_end is not None and focus_end < k
+            if appear > k or gone:
+                for e in els:
+                    if e is not None and e.getparent() is not None:
+                        e.getparent().remove(e)
+            elif focus_end is not None and focus_end < k and box:
+                if box == 'auto':                # ONE mask over the part; outline-only shapes fade in place
+                    filled = [e for e in els if e is not None and not _outline_only(e)]
+                    dim([e for e in els if e is not None and _outline_only(e)], 25000)
+                    b = bbox(filled, s, pad=6)
+                    if b:
+                        masks.append(b)
+                else:
+                    masks.append(box)
+                faded.update(id(e) for e in els if e is not None)
+            else:
+                live.append(els)
+        vids = _VIDEOS.get(id(s._element))
+        if vids:                                   # drop removed videos from the slide timing
+            alive = {e.get('id') for e in s._element.iter(qn('p:cNvPr'))}
+            _VIDEOS[id(s._element)] = [v for v in vids if v[0] in alive]
+            _video_timing(s)
+        merged = True                            # overlapping masks would stack into an opaque block
+        while merged:
+            merged = False
+            for i in range(len(masks)):
+                for j in range(i + 1, len(masks)):
+                    a_, b_ = masks[i], masks[j]
+                    if (a_[0] < b_[0] + b_[2] and b_[0] < a_[0] + a_[2] and a_[1] < b_[1] + b_[3] and b_[1] < a_[1] + a_[3]):
+                        x0, y0 = min(a_[0], b_[0]), min(a_[1], b_[1])
+                        x1 = max(a_[0] + a_[2], b_[0] + b_[2])
+                        y1 = max(a_[1] + a_[3], b_[1] + b_[3])
+                        masks[i] = (x0, y0, x1 - x0, y1 - y0)
+                        del masks[j]
+                        merged = True
+                        break
+                if merged:
+                    break
+        tree = s.shapes._spTree
+        for b in masks:
+            dim_area(s, *b)
+            for e in list(tree):
+                if id(e) in faded or e.tag not in (qn('p:sp'), qn('p:pic'), qn('p:cxnSp'), qn('p:grpSp')):
+                    continue
+                eb = box_of(e, s)
+                if not eb or eb[1] * 1 >= 1035 or eb[3] <= 0:
+                    continue
+                ix = min(b[0] + b[2], eb[0] + eb[2]) - max(b[0], eb[0])
+                iy = min(b[1] + b[3], eb[1] + eb[3]) - max(b[1], eb[1])
+                inside = ix >= eb[2] - 2 and iy >= eb[3] - 2
+                live_ids = {id(x) for els in live for x in els if x is not None}
+                has_text = e.find('.//' + qn('a:t')) is not None
+                if (ix > 2 and iy > 2 and not inside and e.find('.//' + qn('a:alpha')) is None
+                        and (id(e) in live_ids or has_text)):
+                    name = e.find('.//' + qn('p:cNvPr')).get('name')
+                    print(f'build_steps: step {k}: mask {tuple(int(v) for v in b)} cuts through "{name}"')
+        for els in live:                         # current parts back on top of every mask
+            for e in els:
+                if e is not None and e.getparent() is tree:
+                    tree.remove(e)
+                    ext = tree.find(qn('p:extLst'))
+                    if ext is not None:
+                        ext.addprevious(e)
+                    else:
+                        tree.append(e)
+        if scripts:
+            notes(s, scripts[k - 1])
+        out.append(s)
+    _ARROW.pop('build', None)
     return out
 
 
